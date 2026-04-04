@@ -179,8 +179,6 @@ def test_validate_model_delegates_to_validator():
 
 def test_validate_model_returns_false_for_unknown_model():
     client = AnthropicClient("not-a-real-claude-model")
-    with patch(
-        "tradingagents.llm_clients.anthropic_client.validate_model", return_value=False
-    ):
+    with patch("tradingagents.llm_clients.anthropic_client.validate_model", return_value=False):
         result = client.validate_model()
         assert result is False

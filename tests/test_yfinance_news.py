@@ -309,9 +309,7 @@ class TestGetNewsYfinance:
         assert "No Summary" in result
         # Summary line should not appear as extra content between title and link
         lines = result.strip().split("\n")
-        title_line_idx = next(
-            i for i, line in enumerate(lines) if "No Summary" in line
-        )
+        title_line_idx = next(i for i, line in enumerate(lines) if "No Summary" in line)
         # Next non-empty line should be Link, not a summary
         remaining = [x for x in lines[title_line_idx + 1 :] if x.strip()]
         if remaining:
