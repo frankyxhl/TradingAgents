@@ -7,16 +7,14 @@ including CN/EN prompt selection, state update format, memory integration,
 LLM invocation, and sender metadata.
 """
 
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from tradingagents.agents.trader.trader import create_trader
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_state(
     company_of_interest="AAPL",
@@ -58,6 +56,7 @@ def _mock_memory(memories=None):
 # ---------------------------------------------------------------------------
 # CN/EN prompt selection
 # ---------------------------------------------------------------------------
+
 
 @patch("tradingagents.agents.trader.trader.get_language_instruction")
 def test_chinese_prompt_when_language_instruction_non_empty(mock_lang):
@@ -159,6 +158,7 @@ def test_no_language_instruction_in_english_system_prompt(mock_lang):
 # State update format
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.trader.trader.get_language_instruction")
 def test_returns_required_keys(mock_lang):
     """The returned dict must have messages, trader_investment_plan, and sender."""
@@ -216,6 +216,7 @@ def test_sender_is_trader(mock_lang):
 # Conclusion format in prompt
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.trader.trader.get_language_instruction")
 def test_english_conclusion_format_in_system_prompt(mock_lang):
     """English mode should instruct LLM to end with FINAL TRANSACTION PROPOSAL."""
@@ -249,6 +250,7 @@ def test_chinese_conclusion_format_in_system_prompt(mock_lang):
 # ---------------------------------------------------------------------------
 # LLM invocation
 # ---------------------------------------------------------------------------
+
 
 @patch("tradingagents.agents.trader.trader.get_language_instruction")
 def test_llm_invoke_called_once(mock_lang):
@@ -330,6 +332,7 @@ def test_system_prompt_contains_trading_role(mock_lang):
 # State reads: reports feed into LLM context
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.trader.trader.get_language_instruction")
 def test_all_reports_feed_into_memory_lookup(mock_lang):
     """All four reports should be combined for the memory lookup."""
@@ -338,12 +341,14 @@ def test_all_reports_feed_into_memory_lookup(mock_lang):
     memory = _mock_memory()
 
     trader = create_trader(llm, memory)
-    trader(_make_state(
-        market_report="MR_UNIQUE",
-        sentiment_report="SR_UNIQUE",
-        news_report="NR_UNIQUE",
-        fundamentals_report="FR_UNIQUE",
-    ))
+    trader(
+        _make_state(
+            market_report="MR_UNIQUE",
+            sentiment_report="SR_UNIQUE",
+            news_report="NR_UNIQUE",
+            fundamentals_report="FR_UNIQUE",
+        )
+    )
 
     memory.get_memories.assert_called_once()
     situation_arg = memory.get_memories.call_args[0][0]
@@ -371,6 +376,7 @@ def test_company_of_interest_in_user_prompt(mock_lang):
 # ---------------------------------------------------------------------------
 # Memory integration
 # ---------------------------------------------------------------------------
+
 
 @patch("tradingagents.agents.trader.trader.get_language_instruction")
 def test_memory_get_memories_called_with_n_matches_2(mock_lang):
@@ -443,6 +449,7 @@ def test_none_memories_uses_fallback_text(mock_lang):
 # Factory function
 # ---------------------------------------------------------------------------
 
+
 def test_create_trader_returns_callable():
     """create_trader should return a callable."""
     llm = _mock_llm()
@@ -468,6 +475,7 @@ def test_create_trader_binds_name_trader(mock_lang):
 # ---------------------------------------------------------------------------
 # Chinese mode user prompt includes investment plan
 # ---------------------------------------------------------------------------
+
 
 @patch("tradingagents.agents.trader.trader.get_language_instruction")
 def test_chinese_user_prompt_includes_investment_plan(mock_lang):

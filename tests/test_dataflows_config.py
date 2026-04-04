@@ -1,18 +1,16 @@
 """Tests for tradingagents/dataflows/config.py"""
 
-import pytest
-from unittest.mock import patch, MagicMock
-import importlib
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _reset_config_module():
     """Reset the config module's internal _config state to None so each test
     starts from a clean slate."""
     import tradingagents.dataflows.config as cfg_mod
+
     cfg_mod._config = None
 
 
@@ -20,9 +18,11 @@ def _reset_config_module():
 # initialize_config
 # ---------------------------------------------------------------------------
 
+
 def test_initialize_config_sets_config_from_defaults():
     _reset_config_module()
     import tradingagents.dataflows.config as cfg_mod
+
     cfg_mod.initialize_config()
     assert cfg_mod._config is not None
 
@@ -53,6 +53,7 @@ def test_initialize_config_does_not_reinitialize_if_already_set():
 # ---------------------------------------------------------------------------
 # set_config
 # ---------------------------------------------------------------------------
+
 
 def test_set_config_updates_existing_key():
     _reset_config_module()
@@ -107,6 +108,7 @@ def test_set_config_multiple_keys_at_once():
 # get_config
 # ---------------------------------------------------------------------------
 
+
 def test_get_config_returns_dict():
     _reset_config_module()
     import tradingagents.dataflows.config as cfg_mod
@@ -148,6 +150,7 @@ def test_get_config_reflects_set_config_changes():
 # ---------------------------------------------------------------------------
 # Default value checks
 # ---------------------------------------------------------------------------
+
 
 def test_default_llm_provider_is_openai():
     _reset_config_module()

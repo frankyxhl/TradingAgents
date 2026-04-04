@@ -4,34 +4,37 @@ Covers: yf_retry, _clean_dataframe, load_ohlcv, filter_financials_by_date,
         StockstatsUtils.get_stock_stats
 """
 
-import pytest
-import pandas as pd
+from unittest.mock import MagicMock, call, patch
+
 import numpy as np
-from unittest.mock import patch, MagicMock, call
-
+import pandas as pd
+import pytest
 from yfinance.exceptions import YFRateLimitError
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_ohlcv(rows=5, start="2024-01-02"):
     """Build a minimal OHLCV DataFrame with a 'Date' string column."""
     dates = pd.bdate_range(start, periods=rows)
-    return pd.DataFrame({
-        "Date": dates.strftime("%Y-%m-%d"),
-        "Open": [100.0 + i for i in range(rows)],
-        "High": [105.0 + i for i in range(rows)],
-        "Low": [99.0 + i for i in range(rows)],
-        "Close": [103.0 + i for i in range(rows)],
-        "Volume": [1_000_000 + i * 100_000 for i in range(rows)],
-    })
+    return pd.DataFrame(
+        {
+            "Date": dates.strftime("%Y-%m-%d"),
+            "Open": [100.0 + i for i in range(rows)],
+            "High": [105.0 + i for i in range(rows)],
+            "Low": [99.0 + i for i in range(rows)],
+            "Close": [103.0 + i for i in range(rows)],
+            "Volume": [1_000_000 + i * 100_000 for i in range(rows)],
+        }
+    )
 
 
 # ===================================================================
 # yf_retry
 # ===================================================================
+
 
 class TestYfRetry:
     """Tests for the yf_retry exponential-backoff wrapper."""
@@ -57,9 +60,7 @@ class TestYfRetry:
     def test_exponential_backoff_delays(self, mock_sleep):
         from tradingagents.dataflows.stockstats_utils import yf_retry
 
-        func = MagicMock(
-            side_effect=[YFRateLimitError(), YFRateLimitError(), "ok"]
-        )
+        func = MagicMock(side_effect=[YFRateLimitError(), YFRateLimitError(), "ok"])
         yf_retry(func, max_retries=3, base_delay=2.0)
         assert mock_sleep.call_args_list == [call(2.0), call(4.0)]
 
@@ -95,6 +96,7 @@ class TestYfRetry:
 # _clean_dataframe
 # ===================================================================
 
+
 class TestCleanDataframe:
     """Tests for the _clean_dataframe helper."""
 
@@ -125,14 +127,16 @@ class TestCleanDataframe:
         from tradingagents.dataflows.stockstats_utils import _clean_dataframe
 
         dates = pd.bdate_range("2024-01-02", periods=3)
-        df = pd.DataFrame({
-            "Date": dates.strftime("%Y-%m-%d"),
-            "Open": ["bad", "101.0", "102.0"],  # first value non-numeric
-            "High": [105.0, 106.0, 107.0],
-            "Low": [99.0, 100.0, 101.0],
-            "Close": [103.0, 104.0, 105.0],
-            "Volume": [1_000_000, 1_100_000, 1_200_000],
-        })
+        df = pd.DataFrame(
+            {
+                "Date": dates.strftime("%Y-%m-%d"),
+                "Open": ["bad", "101.0", "102.0"],  # first value non-numeric
+                "High": [105.0, 106.0, 107.0],
+                "Low": [99.0, 100.0, 101.0],
+                "Close": [103.0, 104.0, 105.0],
+                "Volume": [1_000_000, 1_100_000, 1_200_000],
+            }
+        )
         result = _clean_dataframe(df)
         # 'bad' coerced to NaN, then ffill/bfill should fill it
         assert not result["Open"].isna().any()
@@ -148,7 +152,9 @@ class TestCleanDataframe:
     def test_empty_dataframe_returns_empty(self):
         from tradingagents.dataflows.stockstats_utils import _clean_dataframe
 
-        df = pd.DataFrame({"Date": [], "Open": [], "High": [], "Low": [], "Close": [], "Volume": []})
+        df = pd.DataFrame(
+            {"Date": [], "Open": [], "High": [], "Low": [], "Close": [], "Volume": []}
+        )
         result = _clean_dataframe(df)
         assert result.empty
 
@@ -172,14 +178,17 @@ class TestCleanDataframe:
 # load_ohlcv
 # ===================================================================
 
+
 class TestLoadOhlcv:
     """Tests for load_ohlcv — all filesystem and network access mocked."""
 
     @patch("tradingagents.dataflows.stockstats_utils.os.path.exists", return_value=True)
     @patch("tradingagents.dataflows.stockstats_utils.pd.read_csv")
     @patch("tradingagents.dataflows.stockstats_utils.os.makedirs")
-    @patch("tradingagents.dataflows.stockstats_utils.get_config",
-           return_value={"data_cache_dir": "/tmp/cache"})
+    @patch(
+        "tradingagents.dataflows.stockstats_utils.get_config",
+        return_value={"data_cache_dir": "/tmp/cache"},
+    )
     def test_loads_from_cache_when_file_exists(
         self, mock_cfg, mock_makedirs, mock_read_csv, mock_exists
     ):
@@ -195,11 +204,11 @@ class TestLoadOhlcv:
     @patch("tradingagents.dataflows.stockstats_utils.os.path.exists", return_value=False)
     @patch("tradingagents.dataflows.stockstats_utils.yf_retry")
     @patch("tradingagents.dataflows.stockstats_utils.os.makedirs")
-    @patch("tradingagents.dataflows.stockstats_utils.get_config",
-           return_value={"data_cache_dir": "/tmp/cache"})
-    def test_downloads_when_no_cache(
-        self, mock_cfg, mock_makedirs, mock_yf_retry, mock_exists
-    ):
+    @patch(
+        "tradingagents.dataflows.stockstats_utils.get_config",
+        return_value={"data_cache_dir": "/tmp/cache"},
+    )
+    def test_downloads_when_no_cache(self, mock_cfg, mock_makedirs, mock_yf_retry, mock_exists):
         from tradingagents.dataflows.stockstats_utils import load_ohlcv
 
         raw_df = _make_ohlcv(5)
@@ -215,11 +224,11 @@ class TestLoadOhlcv:
     @patch("tradingagents.dataflows.stockstats_utils.os.path.exists", return_value=True)
     @patch("tradingagents.dataflows.stockstats_utils.pd.read_csv")
     @patch("tradingagents.dataflows.stockstats_utils.os.makedirs")
-    @patch("tradingagents.dataflows.stockstats_utils.get_config",
-           return_value={"data_cache_dir": "/tmp/cache"})
-    def test_filters_future_dates(
-        self, mock_cfg, mock_makedirs, mock_read_csv, mock_exists
-    ):
+    @patch(
+        "tradingagents.dataflows.stockstats_utils.get_config",
+        return_value={"data_cache_dir": "/tmp/cache"},
+    )
+    def test_filters_future_dates(self, mock_cfg, mock_makedirs, mock_read_csv, mock_exists):
         from tradingagents.dataflows.stockstats_utils import load_ohlcv
 
         cached_df = _make_ohlcv(5, start="2024-01-02")
@@ -232,11 +241,11 @@ class TestLoadOhlcv:
     @patch("tradingagents.dataflows.stockstats_utils.os.path.exists", return_value=True)
     @patch("tradingagents.dataflows.stockstats_utils.pd.read_csv")
     @patch("tradingagents.dataflows.stockstats_utils.os.makedirs")
-    @patch("tradingagents.dataflows.stockstats_utils.get_config",
-           return_value={"data_cache_dir": "/tmp/cache"})
-    def test_creates_cache_directory(
-        self, mock_cfg, mock_makedirs, mock_read_csv, mock_exists
-    ):
+    @patch(
+        "tradingagents.dataflows.stockstats_utils.get_config",
+        return_value={"data_cache_dir": "/tmp/cache"},
+    )
+    def test_creates_cache_directory(self, mock_cfg, mock_makedirs, mock_read_csv, mock_exists):
         from tradingagents.dataflows.stockstats_utils import load_ohlcv
 
         mock_read_csv.return_value = _make_ohlcv(3)
@@ -248,15 +257,14 @@ class TestLoadOhlcv:
 # filter_financials_by_date
 # ===================================================================
 
+
 class TestFilterFinancialsByDate:
     """Tests for filter_financials_by_date."""
 
     def test_drops_future_columns(self):
         from tradingagents.dataflows.stockstats_utils import filter_financials_by_date
 
-        df = pd.DataFrame(
-            {"2024-01-01": [1], "2024-06-01": [2], "2025-01-01": [3]}
-        )
+        df = pd.DataFrame({"2024-01-01": [1], "2024-06-01": [2], "2025-01-01": [3]})
         result = filter_financials_by_date(df, "2024-06-01")
         assert list(result.columns) == ["2024-01-01", "2024-06-01"]
 
@@ -295,6 +303,7 @@ class TestFilterFinancialsByDate:
 # ===================================================================
 # StockstatsUtils.get_stock_stats
 # ===================================================================
+
 
 class TestGetStockStats:
     """Tests for StockstatsUtils.get_stock_stats."""

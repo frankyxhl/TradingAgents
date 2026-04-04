@@ -21,4 +21,4 @@ jobs:
           pip install pytest pytest-bdd pytest-cov
       - name: Run BDD tests
         run: |
-          python -m pytest tests/test_bdd_scenarios.py -v
+          python -m pytest tests/test_bdd_scenarios.py -v -o "addopts=" --no-cov

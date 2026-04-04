@@ -1,18 +1,16 @@
 """Tests for tradingagents/llm_clients/anthropic_client.py"""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from tradingagents.llm_clients.anthropic_client import (
-    AnthropicClient,
-    NormalizedChatAnthropic,
     _PASSTHROUGH_KWARGS,
+    AnthropicClient,
 )
-
 
 # ---------------------------------------------------------------------------
 # AnthropicClient construction
 # ---------------------------------------------------------------------------
+
 
 def test_client_stores_model():
     client = AnthropicClient("claude-3-5-sonnet-20241022")
@@ -38,6 +36,7 @@ def test_client_stores_extra_kwargs():
 # get_llm — basic construction
 # ---------------------------------------------------------------------------
 
+
 def test_get_llm_returns_normalized_chat_anthropic_instance():
     client = AnthropicClient("claude-3-5-sonnet-20241022")
     with patch(
@@ -61,6 +60,7 @@ def test_get_llm_passes_model_to_constructor():
 # ---------------------------------------------------------------------------
 # get_llm — base_url handling
 # ---------------------------------------------------------------------------
+
 
 def test_get_llm_forwards_base_url_when_provided():
     client = AnthropicClient("claude-3-5-sonnet-20241022", base_url="https://proxy.example.com")
@@ -86,6 +86,7 @@ def test_get_llm_omits_base_url_when_none():
 # get_llm — API key passthrough
 # ---------------------------------------------------------------------------
 
+
 def test_get_llm_forwards_api_key_kwarg():
     client = AnthropicClient("claude-3-5-sonnet-20241022", api_key="sk-ant-test-key")
     with patch(
@@ -109,6 +110,7 @@ def test_get_llm_omits_api_key_when_not_provided():
 # ---------------------------------------------------------------------------
 # get_llm — additional passthrough kwargs
 # ---------------------------------------------------------------------------
+
 
 def test_get_llm_forwards_timeout():
     client = AnthropicClient("claude-3-5-sonnet-20241022", timeout=60)
@@ -154,6 +156,7 @@ def test_get_llm_does_not_forward_unknown_kwargs():
 # passthrough kwargs list coverage
 # ---------------------------------------------------------------------------
 
+
 def test_passthrough_kwargs_includes_required_keys():
     for key in ("timeout", "max_retries", "api_key", "max_tokens"):
         assert key in _PASSTHROUGH_KWARGS
@@ -162,6 +165,7 @@ def test_passthrough_kwargs_includes_required_keys():
 # ---------------------------------------------------------------------------
 # validate_model delegates to validator
 # ---------------------------------------------------------------------------
+
 
 def test_validate_model_delegates_to_validator():
     client = AnthropicClient("claude-3-5-sonnet-20241022")
@@ -177,6 +181,6 @@ def test_validate_model_returns_false_for_unknown_model():
     client = AnthropicClient("not-a-real-claude-model")
     with patch(
         "tradingagents.llm_clients.anthropic_client.validate_model", return_value=False
-    ) as mock_v:
+    ):
         result = client.validate_model()
         assert result is False

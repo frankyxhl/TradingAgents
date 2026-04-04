@@ -3,25 +3,24 @@
 All yfinance / network calls are mocked. No real HTTP requests are made.
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from unittest.mock import patch, MagicMock, PropertyMock
-from datetime import datetime
+from unittest.mock import MagicMock, patch
 
+import pandas as pd
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_ohlcv_df(n=5, start="2024-01-02", tz="US/Eastern"):
     """Return a realistic OHLCV DataFrame with timezone-aware DatetimeIndex."""
     idx = pd.bdate_range(start=start, periods=n, tz=tz)
     return pd.DataFrame(
         {
-            "Open":  [100.0 + i for i in range(n)],
-            "High":  [105.0 + i for i in range(n)],
-            "Low":   [99.0  + i for i in range(n)],
+            "Open": [100.0 + i for i in range(n)],
+            "High": [105.0 + i for i in range(n)],
+            "Low": [99.0 + i for i in range(n)],
             "Close": [103.0 + i for i in range(n)],
             "Volume": [1_000_000 + i * 100_000 for i in range(n)],
         },
@@ -31,7 +30,6 @@ def _make_ohlcv_df(n=5, start="2024-01-02", tz="US/Eastern"):
 
 def _make_financials_df():
     """Return a small DataFrame mimicking yfinance balance sheet / income stmt."""
-    cols = [pd.Timestamp("2024-06-30"), pd.Timestamp("2024-03-31")]
     return pd.DataFrame(
         {"TotalAssets": [100, 200], "TotalLiabilities": [50, 80]},
         index=["Row1", "Row2"],
@@ -50,8 +48,8 @@ def _make_financials_df_with_dates():
 # get_YFin_data_online
 # ============================================================================
 
-class TestGetYFinDataOnline:
 
+class TestGetYFinDataOnline:
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_returns_csv_with_header(self, mock_ticker_cls, mock_retry):
@@ -167,8 +165,8 @@ class TestGetYFinDataOnline:
 # get_stock_stats_indicators_window
 # ============================================================================
 
-class TestGetStockStatsIndicatorsWindow:
 
+class TestGetStockStatsIndicatorsWindow:
     def test_unsupported_indicator_raises(self):
         """Passing an unsupported indicator name should raise ValueError."""
         from tradingagents.dataflows.y_finance import get_stock_stats_indicators_window
@@ -233,7 +231,10 @@ class TestGetStockStatsIndicatorsWindow:
         assert "overbought" in result.lower() or "oversold" in result.lower()
 
     @patch("tradingagents.dataflows.y_finance.get_stockstats_indicator")
-    @patch("tradingagents.dataflows.y_finance._get_stock_stats_bulk", side_effect=Exception("bulk error"))
+    @patch(
+        "tradingagents.dataflows.y_finance._get_stock_stats_bulk",
+        side_effect=Exception("bulk error"),
+    )
     def test_fallback_to_individual_calls_on_bulk_failure(self, mock_bulk, mock_individual):
         """When _get_stock_stats_bulk raises, the function falls back to per-date calls."""
         mock_individual.return_value = "99.5"
@@ -250,6 +251,7 @@ class TestGetStockStatsIndicatorsWindow:
 # ============================================================================
 # _get_stock_stats_bulk
 # ============================================================================
+
 
 class TestGetStockStatsBulk:
     """Tests for _get_stock_stats_bulk.
@@ -270,14 +272,16 @@ class TestGetStockStatsBulk:
         not import pandas.  If the bug is fixed (by adding `import pandas as pd`
         to y_finance.py), this test should be updated to verify correct output.
         """
-        df = pd.DataFrame({
-            "Date": pd.to_datetime(["2024-06-01", "2024-06-02", "2024-06-03"]),
-            "Open": [100, 101, 102],
-            "High": [105, 106, 107],
-            "Low": [99, 100, 101],
-            "Close": [103, 104, 105],
-            "Volume": [1e6, 1.1e6, 1.2e6],
-        })
+        df = pd.DataFrame(
+            {
+                "Date": pd.to_datetime(["2024-06-01", "2024-06-02", "2024-06-03"]),
+                "Open": [100, 101, 102],
+                "High": [105, 106, 107],
+                "Low": [99, 100, 101],
+                "Close": [103, 104, 105],
+                "Volume": [1e6, 1.1e6, 1.2e6],
+            }
+        )
         mock_load.return_value = df
 
         from tradingagents.dataflows.y_finance import _get_stock_stats_bulk
@@ -288,14 +292,16 @@ class TestGetStockStatsBulk:
     @patch("tradingagents.dataflows.y_finance.load_ohlcv")
     def test_calls_load_ohlcv_and_wraps(self, mock_load):
         """Verify load_ohlcv is called and stockstats wrap is used before the bug hits."""
-        df = pd.DataFrame({
-            "Date": pd.to_datetime(["2024-06-01"]),
-            "Open": [100],
-            "High": [105],
-            "Low": [99],
-            "Close": [103],
-            "Volume": [1e6],
-        })
+        df = pd.DataFrame(
+            {
+                "Date": pd.to_datetime(["2024-06-01"]),
+                "Open": [100],
+                "High": [105],
+                "Low": [99],
+                "Close": [103],
+                "Volume": [1e6],
+            }
+        )
         mock_load.return_value = df
 
         from tradingagents.dataflows.y_finance import _get_stock_stats_bulk
@@ -311,8 +317,8 @@ class TestGetStockStatsBulk:
 # get_stockstats_indicator
 # ============================================================================
 
-class TestGetStockstatsIndicator:
 
+class TestGetStockstatsIndicator:
     @patch("tradingagents.dataflows.y_finance.StockstatsUtils")
     def test_returns_stringified_value(self, mock_utils):
         """Normal case: returns the indicator value as a string."""
@@ -350,8 +356,8 @@ class TestGetStockstatsIndicator:
 # get_fundamentals
 # ============================================================================
 
-class TestGetFundamentals:
 
+class TestGetFundamentals:
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_returns_formatted_fundamentals(self, mock_ticker_cls, mock_retry):
@@ -448,9 +454,11 @@ class TestGetFundamentals:
 # get_balance_sheet
 # ============================================================================
 
-class TestGetBalanceSheet:
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d)
+class TestGetBalanceSheet:
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_quarterly_balance_sheet(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -465,7 +473,9 @@ class TestGetBalanceSheet:
         result = get_balance_sheet("AAPL", freq="quarterly", curr_date="2024-06-30")
         assert "# Balance Sheet data for AAPL (quarterly)" in result
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d)
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_annual_balance_sheet(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -480,7 +490,10 @@ class TestGetBalanceSheet:
         result = get_balance_sheet("AAPL", freq="annual", curr_date="2024-06-30")
         assert "# Balance Sheet data for AAPL (annual)" in result
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: pd.DataFrame())
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date",
+        side_effect=lambda d, c: pd.DataFrame(),
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_empty_returns_message(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -507,9 +520,11 @@ class TestGetBalanceSheet:
 # get_cashflow
 # ============================================================================
 
-class TestGetCashflow:
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d)
+class TestGetCashflow:
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_quarterly_cashflow(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -524,7 +539,9 @@ class TestGetCashflow:
         result = get_cashflow("AAPL", freq="quarterly", curr_date="2024-06-30")
         assert "# Cash Flow data for AAPL (quarterly)" in result
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d)
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_annual_cashflow(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -539,7 +556,10 @@ class TestGetCashflow:
         result = get_cashflow("AAPL", freq="annual", curr_date="2024-06-30")
         assert "# Cash Flow data for AAPL (annual)" in result
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: pd.DataFrame())
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date",
+        side_effect=lambda d, c: pd.DataFrame(),
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_empty_returns_message(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -566,9 +586,11 @@ class TestGetCashflow:
 # get_income_statement
 # ============================================================================
 
-class TestGetIncomeStatement:
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d)
+class TestGetIncomeStatement:
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_quarterly_income(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -583,7 +605,9 @@ class TestGetIncomeStatement:
         result = get_income_statement("AAPL", freq="quarterly", curr_date="2024-06-30")
         assert "# Income Statement data for AAPL (quarterly)" in result
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d)
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: d
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_annual_income(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -598,7 +622,10 @@ class TestGetIncomeStatement:
         result = get_income_statement("AAPL", freq="annual", curr_date="2024-06-30")
         assert "# Income Statement data for AAPL (annual)" in result
 
-    @patch("tradingagents.dataflows.y_finance.filter_financials_by_date", side_effect=lambda d, c: pd.DataFrame())
+    @patch(
+        "tradingagents.dataflows.y_finance.filter_financials_by_date",
+        side_effect=lambda d, c: pd.DataFrame(),
+    )
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_empty_returns_message(self, mock_ticker_cls, mock_retry, mock_filter):
@@ -625,17 +652,19 @@ class TestGetIncomeStatement:
 # get_insider_transactions
 # ============================================================================
 
-class TestGetInsiderTransactions:
 
+class TestGetInsiderTransactions:
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
     def test_returns_csv_with_header(self, mock_ticker_cls, mock_retry):
         """Normal case: returns a header + CSV string of transactions."""
-        df = pd.DataFrame({
-            "Insider": ["John Doe", "Jane Smith"],
-            "Shares": [1000, -500],
-            "Value": [150000, -75000],
-        })
+        df = pd.DataFrame(
+            {
+                "Insider": ["John Doe", "Jane Smith"],
+                "Shares": [1000, -500],
+                "Value": [150000, -75000],
+            }
+        )
         mock_ticker_inst = MagicMock()
         mock_ticker_cls.return_value = mock_ticker_inst
         mock_retry.side_effect = lambda fn: df
@@ -698,15 +727,24 @@ class TestGetInsiderTransactions:
 # Supported indicators list coverage
 # ============================================================================
 
+
 class TestSupportedIndicators:
     """Ensure all documented indicators are accepted."""
 
     SUPPORTED = [
-        "close_50_sma", "close_200_sma", "close_10_ema",
-        "macd", "macds", "macdh",
+        "close_50_sma",
+        "close_200_sma",
+        "close_10_ema",
+        "macd",
+        "macds",
+        "macdh",
         "rsi",
-        "boll", "boll_ub", "boll_lb", "atr",
-        "vwma", "mfi",
+        "boll",
+        "boll_ub",
+        "boll_lb",
+        "atr",
+        "vwma",
+        "mfi",
     ]
 
     @patch("tradingagents.dataflows.y_finance._get_stock_stats_bulk")

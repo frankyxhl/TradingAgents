@@ -1,19 +1,17 @@
 """Tests for tradingagents/dataflows/yfinance_news.py"""
 
-import pytest
-from datetime import datetime, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from tradingagents.dataflows.yfinance_news import (
     _extract_article_data,
-    get_news_yfinance,
     get_global_news_yfinance,
+    get_news_yfinance,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
 # ---------------------------------------------------------------------------
+
 
 def _nested_article(
     title="Stock rises 10%",
@@ -53,6 +51,7 @@ def _flat_article(
 # ---------------------------------------------------------------------------
 # _extract_article_data — nested content structure
 # ---------------------------------------------------------------------------
+
 
 class TestExtractArticleDataNested:
     """Tests for _extract_article_data with nested 'content' structure."""
@@ -106,9 +105,7 @@ class TestExtractArticleDataNested:
         assert data["pub_date"].day == 15
 
     def test_parses_pub_date_iso_with_offset(self):
-        data = _extract_article_data(
-            _nested_article(pub_date="2024-06-01T08:30:00+05:00")
-        )
+        data = _extract_article_data(_nested_article(pub_date="2024-06-01T08:30:00+05:00"))
         assert data["pub_date"] is not None
         assert data["pub_date"].year == 2024
         assert data["pub_date"].month == 6
@@ -134,6 +131,7 @@ class TestExtractArticleDataNested:
 # ---------------------------------------------------------------------------
 # _extract_article_data — flat structure
 # ---------------------------------------------------------------------------
+
 
 class TestExtractArticleDataFlat:
     """Tests for _extract_article_data with flat (non-nested) structure."""
@@ -166,6 +164,7 @@ class TestExtractArticleDataFlat:
 # ---------------------------------------------------------------------------
 # get_news_yfinance
 # ---------------------------------------------------------------------------
+
 
 class TestGetNewsYfinance:
     """Tests for get_news_yfinance function."""
@@ -241,9 +240,7 @@ class TestGetNewsYfinance:
 
     @patch("tradingagents.dataflows.yfinance_news.yf.Ticker")
     @patch("tradingagents.dataflows.yfinance_news.yf_retry")
-    def test_all_articles_filtered_returns_no_news_in_range(
-        self, mock_retry, mock_ticker_cls
-    ):
+    def test_all_articles_filtered_returns_no_news_in_range(self, mock_retry, mock_ticker_cls):
         """When all articles have dates outside range, return 'no news' message."""
         articles = [
             _nested_article(title="Too early", pub_date="2023-06-01T10:00:00Z"),
@@ -302,9 +299,7 @@ class TestGetNewsYfinance:
 
     @patch("tradingagents.dataflows.yfinance_news.yf.Ticker")
     @patch("tradingagents.dataflows.yfinance_news.yf_retry")
-    def test_article_without_summary_omits_summary_line(
-        self, mock_retry, mock_ticker_cls
-    ):
+    def test_article_without_summary_omits_summary_line(self, mock_retry, mock_ticker_cls):
         articles = [
             _nested_article(title="No Summary", summary="", pub_date="2024-01-15T10:00:00Z"),
         ]
@@ -315,10 +310,10 @@ class TestGetNewsYfinance:
         # Summary line should not appear as extra content between title and link
         lines = result.strip().split("\n")
         title_line_idx = next(
-            i for i, l in enumerate(lines) if "No Summary" in l
+            i for i, line in enumerate(lines) if "No Summary" in line
         )
         # Next non-empty line should be Link, not a summary
-        remaining = [l for l in lines[title_line_idx + 1 :] if l.strip()]
+        remaining = [x for x in lines[title_line_idx + 1 :] if x.strip()]
         if remaining:
             assert remaining[0].startswith("Link:")
 
@@ -368,6 +363,7 @@ class TestGetNewsYfinance:
 # ---------------------------------------------------------------------------
 # get_global_news_yfinance
 # ---------------------------------------------------------------------------
+
 
 class TestGetGlobalNewsYfinance:
     """Tests for get_global_news_yfinance function."""
@@ -498,7 +494,7 @@ class TestGetGlobalNewsYfinance:
         mock_retry.side_effect = mock_retry_fn
 
         # limit=1 means we should stop after collecting 1 article
-        result = get_global_news_yfinance("2024-01-15", limit=1)
+        get_global_news_yfinance("2024-01-15", limit=1)
 
         # First query gives 1 article which meets limit, should break
         assert call_count == 1
@@ -551,8 +547,8 @@ class TestGetGlobalNewsYfinance:
         mock_retry.return_value = mock_search
 
         result = get_global_news_yfinance("2024-01-15")
-        lines = [l for l in result.split("\n") if l.strip()]
-        title_idx = next(i for i, l in enumerate(lines) if "No summary" in l)
+        lines = [x for x in result.split("\n") if x.strip()]
+        title_idx = next(i for i, x in enumerate(lines) if "No summary" in x)
         # After the title line, next content line should be Link or nothing
         remaining = lines[title_idx + 1 :]
         for line in remaining:

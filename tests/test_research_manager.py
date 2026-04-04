@@ -7,16 +7,14 @@ including language instruction injection, state update format, memory integratio
 and LLM invocation with debate context.
 """
 
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from tradingagents.agents.managers.research_manager import create_research_manager
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_state(
     company_of_interest="AAPL",
@@ -71,6 +69,7 @@ def _mock_memory(memories=None):
 # Language instruction injection
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.managers.research_manager.get_language_instruction")
 def test_chinese_language_instruction_in_prompt(mock_lang):
     """When output_language=Chinese, the language instruction appears in the prompt."""
@@ -103,6 +102,7 @@ def test_no_language_instruction_in_english(mock_lang):
 # State update format
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.managers.research_manager.get_language_instruction")
 def test_returns_correct_top_level_keys(mock_lang):
     """Returned dict must contain 'investment_debate_state' and 'investment_plan'."""
@@ -128,8 +128,12 @@ def test_investment_debate_state_has_required_keys(mock_lang):
 
     debate_state = result["investment_debate_state"]
     expected_keys = {
-        "judge_decision", "history", "bear_history",
-        "bull_history", "current_response", "count",
+        "judge_decision",
+        "history",
+        "bear_history",
+        "bull_history",
+        "current_response",
+        "count",
     }
     assert set(debate_state.keys()) == expected_keys
 
@@ -229,6 +233,7 @@ def test_bear_history_preserved(mock_lang):
 # LLM invocation with debate context
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.managers.research_manager.get_language_instruction")
 def test_llm_invoke_called_once(mock_lang):
     """llm.invoke should be called exactly once."""
@@ -288,6 +293,7 @@ def test_prompt_mentions_facilitator_role(mock_lang):
 # Memory integration
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.managers.research_manager.get_language_instruction")
 def test_memory_get_memories_called(mock_lang):
     """memory.get_memories should be called with n_matches=2."""
@@ -311,12 +317,14 @@ def test_memory_situation_includes_reports(mock_lang):
     memory = _mock_memory()
 
     node = create_research_manager(llm, memory)
-    node(_make_state(
-        market_report="MR_UNIQUE",
-        sentiment_report="SR_UNIQUE",
-        news_report="NR_UNIQUE",
-        fundamentals_report="FR_UNIQUE",
-    ))
+    node(
+        _make_state(
+            market_report="MR_UNIQUE",
+            sentiment_report="SR_UNIQUE",
+            news_report="NR_UNIQUE",
+            fundamentals_report="FR_UNIQUE",
+        )
+    )
 
     situation_arg = memory.get_memories.call_args[0][0]
     assert "MR_UNIQUE" in situation_arg
@@ -361,6 +369,7 @@ def test_empty_memories_no_error(mock_lang):
 # ---------------------------------------------------------------------------
 # Factory function
 # ---------------------------------------------------------------------------
+
 
 def test_create_research_manager_returns_callable():
     """create_research_manager should return a callable."""

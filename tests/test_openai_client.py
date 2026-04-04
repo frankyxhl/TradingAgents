@@ -1,20 +1,16 @@
 """Tests for tradingagents/llm_clients/openai_client.py"""
 
-import os
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from tradingagents.llm_clients.openai_client import (
-    OpenAIClient,
-    NormalizedChatOpenAI,
     _PROVIDER_CONFIG,
-    _PASSTHROUGH_KWARGS,
+    OpenAIClient,
 )
-
 
 # ---------------------------------------------------------------------------
 # _PROVIDER_CONFIG shape
 # ---------------------------------------------------------------------------
+
 
 def test_zai_base_url_is_z_ai_coding_endpoint():
     base_url, _ = _PROVIDER_CONFIG["zai"]
@@ -55,6 +51,7 @@ def test_ollama_api_key_env_is_none():
 # OpenAIClient construction
 # ---------------------------------------------------------------------------
 
+
 def test_client_stores_model():
     client = OpenAIClient("gpt-4o")
     assert client.model == "gpt-4o"
@@ -83,6 +80,7 @@ def test_client_stores_extra_kwargs():
 # ---------------------------------------------------------------------------
 # get_llm — OpenAI (native, uses Responses API)
 # ---------------------------------------------------------------------------
+
 
 def test_get_llm_openai_uses_responses_api():
     client = OpenAIClient("gpt-4o", provider="openai")
@@ -120,6 +118,7 @@ def test_get_llm_openai_no_hardcoded_base_url():
 # ---------------------------------------------------------------------------
 # get_llm — ZAI provider
 # ---------------------------------------------------------------------------
+
 
 def test_get_llm_zai_uses_z_ai_base_url():
     client = OpenAIClient("glm-4-plus", provider="zai")
@@ -173,6 +172,7 @@ def test_get_llm_zai_does_not_set_responses_api():
 # get_llm — Ollama (api_key set to "ollama")
 # ---------------------------------------------------------------------------
 
+
 def test_get_llm_ollama_sets_api_key_to_literal_ollama():
     client = OpenAIClient("llama3", provider="ollama")
     with patch(
@@ -197,6 +197,7 @@ def test_get_llm_ollama_uses_localhost_base_url():
 # get_llm — custom base_url for unknown providers (e.g. plain "openai" + override)
 # ---------------------------------------------------------------------------
 
+
 def test_get_llm_custom_base_url_for_openai_provider():
     """When provider is openai but user supplies a custom base_url, it is forwarded."""
     client = OpenAIClient("gpt-4o", base_url="https://proxy.example.com/v1", provider="openai")
@@ -213,6 +214,7 @@ def test_get_llm_custom_base_url_for_openai_provider():
 # ---------------------------------------------------------------------------
 # Passthrough kwargs forwarding
 # ---------------------------------------------------------------------------
+
 
 def test_get_llm_forwards_timeout_kwarg():
     client = OpenAIClient("gpt-4o", provider="openai", timeout=45)
@@ -248,9 +250,12 @@ def test_get_llm_does_not_forward_unknown_kwargs():
 # validate_model delegates correctly
 # ---------------------------------------------------------------------------
 
+
 def test_validate_model_delegates_to_validator():
     client = OpenAIClient("gpt-4o", provider="openai")
-    with patch("tradingagents.llm_clients.openai_client.validate_model", return_value=True) as mock_v:
+    with patch(
+        "tradingagents.llm_clients.openai_client.validate_model", return_value=True
+    ) as mock_v:
         result = client.validate_model()
         mock_v.assert_called_once_with("openai", "gpt-4o")
         assert result is True

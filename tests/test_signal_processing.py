@@ -6,16 +6,14 @@ SignalProcessor wraps an LLM call; all tests mock the LLM so no real
 API calls are made.
 """
 
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import MagicMock
 
 from tradingagents.graph.signal_processing import SignalProcessor
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_processor(return_content="BUY"):
     """Build a SignalProcessor backed by a mocked LLM."""
@@ -27,6 +25,7 @@ def _make_processor(return_content="BUY"):
 # ---------------------------------------------------------------------------
 # Basic signal parsing — happy path
 # ---------------------------------------------------------------------------
+
 
 def test_process_signal_returns_buy():
     processor, _ = _make_processor("BUY")
@@ -50,12 +49,15 @@ def test_process_signal_returns_overweight():
 
 def test_process_signal_returns_underweight():
     processor, _ = _make_processor("UNDERWEIGHT")
-    assert processor.process_signal("Slight caution, recommend underweight position") == "UNDERWEIGHT"
+    assert (
+        processor.process_signal("Slight caution, recommend underweight position") == "UNDERWEIGHT"
+    )
 
 
 # ---------------------------------------------------------------------------
 # LLM is invoked with the correct message structure
 # ---------------------------------------------------------------------------
+
 
 def test_process_signal_passes_signal_as_human_message():
     processor, mock_llm = _make_processor("HOLD")
@@ -102,6 +104,7 @@ def test_process_signal_llm_invoked_exactly_once():
 # Return value is exactly the LLM .content attribute
 # ---------------------------------------------------------------------------
 
+
 def test_process_signal_returns_llm_content_verbatim():
     """Whatever .content the LLM returns is returned as-is (no trimming/wrapping)."""
     processor, _ = _make_processor("OVERWEIGHT")
@@ -119,6 +122,7 @@ def test_process_signal_returns_raw_string_from_llm():
 # ---------------------------------------------------------------------------
 # Edge cases — empty / degenerate inputs
 # ---------------------------------------------------------------------------
+
 
 def test_process_signal_empty_string_input():
     """Empty input should still call the LLM and return its content."""
@@ -160,6 +164,7 @@ def test_process_signal_chinese_input():
 # ---------------------------------------------------------------------------
 # Constructor — LLM is stored correctly
 # ---------------------------------------------------------------------------
+
 
 def test_constructor_stores_llm():
     mock_llm = MagicMock()

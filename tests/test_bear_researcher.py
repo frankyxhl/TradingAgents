@@ -7,16 +7,14 @@ including CN/EN label selection, state update format, memory integration,
 and LLM invocation.
 """
 
-from unittest.mock import patch, MagicMock, call
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from tradingagents.agents.researchers.bear_researcher import create_bear_researcher
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_state(
     market_report="market report",
@@ -67,6 +65,7 @@ def _mock_memory(memories=None):
 # CN/EN label prefix
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.researchers.bear_researcher.get_language_instruction")
 def test_label_chinese_when_language_instruction_non_empty(mock_lang):
     """When get_language_instruction returns a non-empty string (Chinese mode),
@@ -100,6 +99,7 @@ def test_label_english_when_language_instruction_empty(mock_lang):
 # ---------------------------------------------------------------------------
 # State update format
 # ---------------------------------------------------------------------------
+
 
 @patch("tradingagents.agents.researchers.bear_researcher.get_language_instruction")
 def test_returns_investment_debate_state_key(mock_lang):
@@ -196,12 +196,16 @@ def test_current_response_is_labeled_argument(mock_lang):
     bear_node = create_bear_researcher(llm, memory)
     result = bear_node(_make_state())
 
-    assert result["investment_debate_state"]["current_response"] == "Bear Analyst: fundamentals are weak"
+    assert (
+        result["investment_debate_state"]["current_response"]
+        == "Bear Analyst: fundamentals are weak"
+    )
 
 
 # ---------------------------------------------------------------------------
 # Memory integration
 # ---------------------------------------------------------------------------
+
 
 @patch("tradingagents.agents.researchers.bear_researcher.get_language_instruction")
 def test_memory_get_memories_called_with_situation(mock_lang):
@@ -211,12 +215,14 @@ def test_memory_get_memories_called_with_situation(mock_lang):
     memory = _mock_memory()
 
     bear_node = create_bear_researcher(llm, memory)
-    bear_node(_make_state(
-        market_report="MR",
-        sentiment_report="SR",
-        news_report="NR",
-        fundamentals_report="FR",
-    ))
+    bear_node(
+        _make_state(
+            market_report="MR",
+            sentiment_report="SR",
+            news_report="NR",
+            fundamentals_report="FR",
+        )
+    )
 
     memory.get_memories.assert_called_once()
     call_args = memory.get_memories.call_args
@@ -279,6 +285,7 @@ def test_empty_memories_no_error(mock_lang):
 # LLM invocation
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.researchers.bear_researcher.get_language_instruction")
 def test_llm_invoke_called_once(mock_lang):
     """llm.invoke should be called exactly once per bear_node call."""
@@ -314,12 +321,14 @@ def test_llm_prompt_contains_state_reports(mock_lang):
     memory = _mock_memory()
 
     bear_node = create_bear_researcher(llm, memory)
-    bear_node(_make_state(
-        market_report="MARKET_DATA_123",
-        sentiment_report="SENTIMENT_DATA_456",
-        news_report="NEWS_DATA_789",
-        fundamentals_report="FUNDAMENTALS_DATA_012",
-    ))
+    bear_node(
+        _make_state(
+            market_report="MARKET_DATA_123",
+            sentiment_report="SENTIMENT_DATA_456",
+            news_report="NEWS_DATA_789",
+            fundamentals_report="FUNDAMENTALS_DATA_012",
+        )
+    )
 
     prompt = llm.invoke.call_args[0][0]
     assert "MARKET_DATA_123" in prompt
@@ -373,6 +382,7 @@ def test_llm_prompt_no_language_instruction_english(mock_lang):
 # ---------------------------------------------------------------------------
 # Factory function
 # ---------------------------------------------------------------------------
+
 
 def test_create_bear_researcher_returns_callable():
     """create_bear_researcher should return a callable."""

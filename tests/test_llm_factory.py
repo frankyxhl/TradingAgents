@@ -1,17 +1,16 @@
 """Tests for tradingagents/llm_clients/factory.py"""
 
 import pytest
-from unittest.mock import patch, MagicMock
 
-from tradingagents.llm_clients.factory import create_llm_client
-from tradingagents.llm_clients.openai_client import OpenAIClient
 from tradingagents.llm_clients.anthropic_client import AnthropicClient
+from tradingagents.llm_clients.factory import create_llm_client
 from tradingagents.llm_clients.google_client import GoogleClient
-
+from tradingagents.llm_clients.openai_client import OpenAIClient
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_openai(model="gpt-4o", provider="openai", base_url=None, **kw):
     return create_llm_client(provider, model, base_url, **kw)
@@ -20,6 +19,7 @@ def _make_openai(model="gpt-4o", provider="openai", base_url=None, **kw):
 # ---------------------------------------------------------------------------
 # Provider → client class routing
 # ---------------------------------------------------------------------------
+
 
 def test_openai_provider_returns_openai_client():
     client = _make_openai(provider="openai")
@@ -75,6 +75,7 @@ def test_google_provider_case_insensitive():
 # Unknown provider raises ValueError
 # ---------------------------------------------------------------------------
 
+
 def test_unknown_provider_raises_value_error():
     with pytest.raises(ValueError, match="Unsupported LLM provider"):
         create_llm_client("bogus_provider", "some-model")
@@ -88,6 +89,7 @@ def test_unknown_provider_message_includes_name():
 # ---------------------------------------------------------------------------
 # Model and base_url are forwarded to the client
 # ---------------------------------------------------------------------------
+
 
 def test_model_is_stored_on_client():
     client = create_llm_client("openai", "gpt-4o-mini")
@@ -107,6 +109,7 @@ def test_kwargs_are_stored_on_client():
 # ---------------------------------------------------------------------------
 # Provider string is lowercased and forwarded to OpenAIClient
 # ---------------------------------------------------------------------------
+
 
 def test_zai_provider_string_stored_on_openai_client():
     client = create_llm_client("zai", "glm-4-plus")

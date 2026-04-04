@@ -4,14 +4,16 @@ FinancialSituationMemory uses BM25 (rank_bm25.BM25Okapi) for lexical
 similarity matching.  All tests run in-memory -- no network, no Redis.
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
-from tradingagents.agents.utils.memory import FinancialSituationMemory
+from unittest.mock import MagicMock, patch
 
+import pytest
+
+from tradingagents.agents.utils.memory import FinancialSituationMemory
 
 # ---------------------------------------------------------------------------
 # Construction / init
 # ---------------------------------------------------------------------------
+
 
 def test_init_sets_name():
     """Name attribute is stored on construction."""
@@ -37,6 +39,7 @@ def test_init_config_ignored():
 # ---------------------------------------------------------------------------
 # _tokenize
 # ---------------------------------------------------------------------------
+
 
 def test_tokenize_lowercases():
     """Tokens are lowercased."""
@@ -77,6 +80,7 @@ def test_tokenize_numbers():
 # ---------------------------------------------------------------------------
 # add_situations
 # ---------------------------------------------------------------------------
+
 
 def test_add_situations_single():
     """Adding a single (situation, recommendation) pair."""
@@ -124,6 +128,7 @@ def test_add_situations_empty_list():
 # _rebuild_index
 # ---------------------------------------------------------------------------
 
+
 def test_rebuild_index_creates_bm25_with_docs():
     """BM25 index is created when documents exist."""
     mem = FinancialSituationMemory("r")
@@ -145,6 +150,7 @@ def test_rebuild_index_none_when_empty():
 # get_memories – empty / no-match cases
 # ---------------------------------------------------------------------------
 
+
 def test_get_memories_empty_memory_returns_empty():
     """Querying empty memory returns an empty list."""
     mem = FinancialSituationMemory("e")
@@ -164,6 +170,7 @@ def test_get_memories_none_bm25_returns_empty():
 # ---------------------------------------------------------------------------
 # get_memories – result structure
 # ---------------------------------------------------------------------------
+
 
 def test_get_memories_returns_correct_keys():
     """Each result dict has matched_situation, recommendation, similarity_score."""
@@ -196,10 +203,12 @@ def test_get_memories_recommendation_value():
 def test_get_memories_similarity_score_top_is_one():
     """The top match score should be normalized to 1.0 when its raw score > 0."""
     mem = FinancialSituationMemory("sc")
-    mem.add_situations([
-        ("strong dollar hurting emerging markets", "hedge fx exposure"),
-        ("weak dollar boosting exports", "increase international allocation"),
-    ])
+    mem.add_situations(
+        [
+            ("strong dollar hurting emerging markets", "hedge fx exposure"),
+            ("weak dollar boosting exports", "increase international allocation"),
+        ]
+    )
     results = mem.get_memories("dollar strength emerging markets", n_matches=2)
     # BM25 can produce negative scores for low-relevance docs, so we only
     # check that the top result is normalized to 1.0 and scores are descending
@@ -212,11 +221,13 @@ def test_get_memories_top_match_has_score_one():
     """The best match should have a normalized score of 1.0 when max_score > 0."""
     mem = FinancialSituationMemory("top")
     # Use enough distinct terms so the best match has a positive BM25 score
-    mem.add_situations([
-        ("inflation rising sharply rates increasing", "buy gold"),
-        ("technology sector earnings report quarterly results", "buy tech"),
-        ("deflation risk economic slowdown concerns", "buy bonds"),
-    ])
+    mem.add_situations(
+        [
+            ("inflation rising sharply rates increasing", "buy gold"),
+            ("technology sector earnings report quarterly results", "buy tech"),
+            ("deflation risk economic slowdown concerns", "buy bonds"),
+        ]
+    )
     results = mem.get_memories("inflation rising sharply rates", n_matches=3)
     # The top result should be "inflation rising" and have score 1.0
     assert results[0]["matched_situation"] == "inflation rising sharply rates increasing"
@@ -227,13 +238,16 @@ def test_get_memories_top_match_has_score_one():
 # get_memories – n_matches
 # ---------------------------------------------------------------------------
 
+
 def test_get_memories_default_n_matches_is_one():
     """Default call returns a single match."""
     mem = FinancialSituationMemory("n1")
-    mem.add_situations([
-        ("situation A", "advice A"),
-        ("situation B", "advice B"),
-    ])
+    mem.add_situations(
+        [
+            ("situation A", "advice A"),
+            ("situation B", "advice B"),
+        ]
+    )
     results = mem.get_memories("situation")
     assert len(results) == 1
 
@@ -241,11 +255,13 @@ def test_get_memories_default_n_matches_is_one():
 def test_get_memories_n_matches_two():
     """Requesting 2 matches returns exactly 2."""
     mem = FinancialSituationMemory("n2")
-    mem.add_situations([
-        ("alpha scenario", "alpha advice"),
-        ("beta scenario", "beta advice"),
-        ("gamma scenario", "gamma advice"),
-    ])
+    mem.add_situations(
+        [
+            ("alpha scenario", "alpha advice"),
+            ("beta scenario", "beta advice"),
+            ("gamma scenario", "gamma advice"),
+        ]
+    )
     results = mem.get_memories("scenario", n_matches=2)
     assert len(results) == 2
 
@@ -262,14 +278,17 @@ def test_get_memories_n_matches_exceeds_docs():
 # get_memories – BM25 ranking quality
 # ---------------------------------------------------------------------------
 
+
 def test_get_memories_best_match_is_most_relevant():
     """BM25 should rank the most lexically similar document first."""
     mem = FinancialSituationMemory("rank")
-    mem.add_situations([
-        ("tech sector high volatility institutional selling", "reduce tech exposure"),
-        ("strong dollar emerging markets forex", "hedge currency"),
-        ("inflation rising interest rates consumer spending", "defensive sectors"),
-    ])
+    mem.add_situations(
+        [
+            ("tech sector high volatility institutional selling", "reduce tech exposure"),
+            ("strong dollar emerging markets forex", "hedge currency"),
+            ("inflation rising interest rates consumer spending", "defensive sectors"),
+        ]
+    )
     results = mem.get_memories("tech sector volatility selling pressure", n_matches=1)
     assert results[0]["matched_situation"] == "tech sector high volatility institutional selling"
     assert results[0]["recommendation"] == "reduce tech exposure"
@@ -278,11 +297,13 @@ def test_get_memories_best_match_is_most_relevant():
 def test_get_memories_ordering_by_relevance():
     """Results should be ordered from most to least relevant."""
     mem = FinancialSituationMemory("order")
-    mem.add_situations([
-        ("apple banana cherry", "fruit salad"),
-        ("dog cat bird", "pet store"),
-        ("apple cherry pie", "dessert"),
-    ])
+    mem.add_situations(
+        [
+            ("apple banana cherry", "fruit salad"),
+            ("dog cat bird", "pet store"),
+            ("apple cherry pie", "dessert"),
+        ]
+    )
     results = mem.get_memories("apple cherry", n_matches=3)
     scores = [r["similarity_score"] for r in results]
     # Scores should be in descending order
@@ -292,6 +313,7 @@ def test_get_memories_ordering_by_relevance():
 # ---------------------------------------------------------------------------
 # get_memories – edge cases with query content
 # ---------------------------------------------------------------------------
+
 
 def test_get_memories_query_no_overlap():
     """Query with zero term overlap still returns results (scored low)."""
@@ -306,10 +328,12 @@ def test_get_memories_query_no_overlap():
 def test_get_memories_single_word_query():
     """A single-word query should still work."""
     mem = FinancialSituationMemory("sw")
-    mem.add_situations([
-        ("inflation is rising", "buy gold"),
-        ("market is stable", "hold positions"),
-    ])
+    mem.add_situations(
+        [
+            ("inflation is rising", "buy gold"),
+            ("market is stable", "hold positions"),
+        ]
+    )
     results = mem.get_memories("inflation", n_matches=1)
     assert results[0]["matched_situation"] == "inflation is rising"
 
@@ -317,6 +341,7 @@ def test_get_memories_single_word_query():
 # ---------------------------------------------------------------------------
 # clear
 # ---------------------------------------------------------------------------
+
 
 def test_clear_resets_all_state():
     """clear() empties documents, recommendations, and index."""
@@ -355,6 +380,7 @@ def test_clear_then_add_works():
 # Multiple independent instances
 # ---------------------------------------------------------------------------
 
+
 def test_separate_instances_are_independent():
     """Two FinancialSituationMemory instances do not share state."""
     mem_a = FinancialSituationMemory("a")
@@ -367,6 +393,7 @@ def test_separate_instances_are_independent():
 # ---------------------------------------------------------------------------
 # BM25 mocking (verify internal wiring)
 # ---------------------------------------------------------------------------
+
 
 def test_bm25_get_scores_called_during_retrieval():
     """Verify that bm25.get_scores is called with tokenized query."""
@@ -398,6 +425,7 @@ def test_bm25_index_rebuilt_on_add():
 # Score normalization edge case: all scores zero
 # ---------------------------------------------------------------------------
 
+
 def test_get_memories_all_zero_scores():
     """When all BM25 scores are 0, similarity_score should be 0."""
     mem = FinancialSituationMemory("zero")
@@ -415,10 +443,12 @@ def test_get_memories_all_zero_scores():
 def test_get_memories_multiple_zero_scores():
     """All-zero scores with multiple docs should return all zeros."""
     mem = FinancialSituationMemory("mz")
-    mem.add_situations([
-        ("aaa bbb", "advice 1"),
-        ("ccc ddd", "advice 2"),
-    ])
+    mem.add_situations(
+        [
+            ("aaa bbb", "advice 1"),
+            ("ccc ddd", "advice 2"),
+        ]
+    )
 
     mock_bm25 = MagicMock()
     mock_bm25.get_scores.return_value = [0.0, 0.0]

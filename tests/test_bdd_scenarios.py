@@ -12,16 +12,16 @@ Five behavioral tests covering:
 All LLM calls are mocked. No network access required.
 """
 
-import os
 import re
 from unittest.mock import MagicMock, patch
 
 import pytest
-from pytest_bdd import scenario, given, when, then, parsers
+from pytest_bdd import given, parsers, scenario, then, when
 
 # ---------------------------------------------------------------------------
 # Scenario 1: Provider routing
 # ---------------------------------------------------------------------------
+
 
 @scenario("features/provider_routing.feature", "ZAI provider uses Z.AI Coding API endpoint")
 def test_zai_provider_routing():
@@ -75,6 +75,7 @@ def verify_endpoint(llm_client, endpoint):
 # Scenario 2: Chinese localization
 # ---------------------------------------------------------------------------
 
+
 @scenario(
     "features/chinese_localization.feature",
     "Bull analyst label is Chinese when language is Chinese",
@@ -90,8 +91,8 @@ def set_output_language(language):
 
 @when("an agent generates a bull analyst label", target_fixture="bull_label")
 def generate_bull_label(language_config):
-    from tradingagents.dataflows.config import set_config, get_config
     from tradingagents.agents.utils.agent_utils import get_language_instruction
+    from tradingagents.dataflows.config import get_config, set_config
 
     # Save original config so we can restore it
     original = get_config()
@@ -99,7 +100,7 @@ def generate_bull_label(language_config):
         set_config({"output_language": language_config["language"]})
 
         # Call the real source function instead of duplicating its logic
-        instruction = get_language_instruction()
+        get_language_instruction()  # ensure config is active
         # Import label strings from the source module so this test stays
         # in sync if the strings ever change
         from tradingagents.agents.researchers.bull_researcher import create_bull_researcher
@@ -147,6 +148,7 @@ def verify_chinese_label(bull_label, expected):
 # Scenario 3: Report rendering
 # ---------------------------------------------------------------------------
 
+
 @scenario(
     "features/report_rendering.feature",
     "Chinese buy action renders in HTML",
@@ -182,9 +184,7 @@ def render_to_html(report_data):
 
 @then(parsers.parse('the HTML should contain the Chinese action label "{label}"'))
 def html_contains_chinese_label(rendered_html, label):
-    assert label in rendered_html["html"], (
-        f"Expected Chinese label {label!r} in HTML output"
-    )
+    assert label in rendered_html["html"], f"Expected Chinese label {label!r} in HTML output"
 
 
 @then(parsers.parse('should not contain untranslated English label "{eng}" in the badge'))
@@ -202,6 +202,7 @@ def html_badge_no_english(rendered_html, eng):
 # ---------------------------------------------------------------------------
 # Scenario 4: Graph routing
 # ---------------------------------------------------------------------------
+
 
 @scenario(
     "features/graph_routing.feature",
@@ -268,6 +269,7 @@ def verify_next_node(next_node, expected):
 # Scenario 5: End-to-end mock pipeline (signal processing)
 # ---------------------------------------------------------------------------
 
+
 @scenario(
     "features/end_to_end_mock.feature",
     "Pipeline produces a valid trading decision",
@@ -317,6 +319,4 @@ def decision_produced(pipeline_result):
 def decision_valid(pipeline_result):
     decision = pipeline_result["decision"].upper().strip()
     valid = {"BUY", "SELL", "HOLD", "OVERWEIGHT", "UNDERWEIGHT"}
-    assert decision in valid, (
-        f"Decision {decision!r} not in valid set {valid}"
-    )
+    assert decision in valid, f"Decision {decision!r} not in valid set {valid}"

@@ -13,10 +13,10 @@ import pytest
 
 from tradingagents.graph.conditional_logic import ConditionalLogic
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_state(messages=None, investment_debate_state=None, risk_debate_state=None):
     """Build a minimal AgentState-like dict for testing."""
@@ -41,6 +41,7 @@ def _msg(tool_calls=None):
 # Fixture
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def logic():
     """ConditionalLogic with default 1-round limits."""
@@ -56,6 +57,7 @@ def logic_multi():
 # ---------------------------------------------------------------------------
 # should_continue_market
 # ---------------------------------------------------------------------------
+
 
 def test_market_routes_to_tools_when_tool_calls_present(logic):
     state = _make_state(messages=[_msg(tool_calls=[MagicMock()])])
@@ -83,6 +85,7 @@ def test_market_uses_last_message_only(logic):
 # should_continue_social
 # ---------------------------------------------------------------------------
 
+
 def test_social_routes_to_tools_when_tool_calls_present(logic):
     state = _make_state(messages=[_msg(tool_calls=[MagicMock()])])
     assert logic.should_continue_social(state) == "tools_social"
@@ -96,6 +99,7 @@ def test_social_routes_to_clear_when_no_tool_calls(logic):
 # ---------------------------------------------------------------------------
 # should_continue_news
 # ---------------------------------------------------------------------------
+
 
 def test_news_routes_to_tools_when_tool_calls_present(logic):
     state = _make_state(messages=[_msg(tool_calls=[MagicMock()])])
@@ -111,6 +115,7 @@ def test_news_routes_to_clear_when_no_tool_calls(logic):
 # should_continue_fundamentals
 # ---------------------------------------------------------------------------
 
+
 def test_fundamentals_routes_to_tools_when_tool_calls_present(logic):
     state = _make_state(messages=[_msg(tool_calls=[MagicMock()])])
     assert logic.should_continue_fundamentals(state) == "tools_fundamentals"
@@ -125,13 +130,16 @@ def test_fundamentals_routes_to_clear_when_no_tool_calls(logic):
 # should_continue_debate — English labels
 # ---------------------------------------------------------------------------
 
+
 def _debate_state(current_response, count=0):
     return {"current_response": current_response, "count": count}
 
 
 def test_debate_english_bull_routes_to_bear(logic):
     """'Bull Researcher' prefix must route to Bear Researcher."""
-    state = _make_state(investment_debate_state=_debate_state("Bull Researcher: I think we should buy."))
+    state = _make_state(
+        investment_debate_state=_debate_state("Bull Researcher: I think we should buy.")
+    )
     assert logic.should_continue_debate(state) == "Bear Researcher"
 
 
@@ -143,7 +151,9 @@ def test_debate_english_bull_prefix_only_routes_to_bear(logic):
 
 def test_debate_english_bear_routes_to_bull(logic):
     """'Bear Researcher' prefix must route to Bull Researcher (default branch)."""
-    state = _make_state(investment_debate_state=_debate_state("Bear Researcher: risks are too high."))
+    state = _make_state(
+        investment_debate_state=_debate_state("Bear Researcher: risks are too high.")
+    )
     assert logic.should_continue_debate(state) == "Bull Researcher"
 
 
@@ -156,6 +166,7 @@ def test_debate_english_neutral_routes_to_bull(logic):
 # ---------------------------------------------------------------------------
 # should_continue_debate — Chinese labels (livermore fork regression)
 # ---------------------------------------------------------------------------
+
 
 def test_debate_chinese_bull_label_routes_to_bear(logic):
     """看多 prefix must route to Bear Researcher — the 2026-04-04 regression case."""
@@ -178,6 +189,7 @@ def test_debate_chinese_bear_label_routes_to_bull(logic):
 # ---------------------------------------------------------------------------
 # should_continue_debate — round limit
 # ---------------------------------------------------------------------------
+
 
 def test_debate_round_limit_reached_routes_to_research_manager(logic):
     """When count >= 2 * max_debate_rounds the debate ends."""
@@ -216,6 +228,7 @@ def test_debate_count_above_threshold_also_routes_to_research_manager(logic):
 # ---------------------------------------------------------------------------
 # should_continue_risk_analysis — English labels
 # ---------------------------------------------------------------------------
+
 
 def _risk_state(latest_speaker, count=0):
     return {"latest_speaker": latest_speaker, "count": count}
@@ -256,6 +269,7 @@ def test_risk_english_unknown_speaker_routes_to_aggressive(logic):
 # should_continue_risk_analysis — Chinese labels
 # ---------------------------------------------------------------------------
 
+
 def test_risk_chinese_aggressive_routes_to_conservative(logic):
     """激进 prefix must route to Conservative Analyst."""
     state = _make_state(risk_debate_state=_risk_state("激进分析师：应该加仓"))
@@ -287,6 +301,7 @@ def test_risk_chinese_neutral_speaker_routes_to_aggressive(logic):
 # ---------------------------------------------------------------------------
 # should_continue_risk_analysis — round limit
 # ---------------------------------------------------------------------------
+
 
 def test_risk_round_limit_reached_routes_to_portfolio_manager(logic):
     """When count >= 3 * max_risk_discuss_rounds the risk debate ends."""
@@ -322,6 +337,7 @@ def test_risk_count_above_threshold_routes_to_portfolio_manager(logic):
 # ---------------------------------------------------------------------------
 # ConditionalLogic constructor — parameter storage
 # ---------------------------------------------------------------------------
+
 
 def test_constructor_stores_debate_rounds():
     cl = ConditionalLogic(max_debate_rounds=5, max_risk_discuss_rounds=2)

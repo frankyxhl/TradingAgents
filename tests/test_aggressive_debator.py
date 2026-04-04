@@ -9,14 +9,12 @@ mocked; no real API traffic.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from tradingagents.agents.risk_mgmt.aggressive_debator import create_aggressive_debator
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_state(
     risk_debate_state=None,
@@ -60,6 +58,7 @@ def _mock_llm(response_text="I advocate for high-risk strategies."):
 # Tests — English label (output_language=English)
 # ---------------------------------------------------------------------------
 
+
 @patch(
     "tradingagents.agents.risk_mgmt.aggressive_debator.get_language_instruction",
     return_value="",
@@ -91,6 +90,7 @@ def test_english_latest_speaker(mock_lang):
 # Tests — Chinese label (output_language=Chinese)
 # ---------------------------------------------------------------------------
 
+
 @patch(
     "tradingagents.agents.risk_mgmt.aggressive_debator.get_language_instruction",
     return_value=" Write your entire response in Chinese.",
@@ -121,6 +121,7 @@ def test_chinese_latest_speaker_still_english(mock_lang):
 # ---------------------------------------------------------------------------
 # Tests — return structure
 # ---------------------------------------------------------------------------
+
 
 @patch(
     "tradingagents.agents.risk_mgmt.aggressive_debator.get_language_instruction",
@@ -196,6 +197,7 @@ def test_preserves_other_histories(mock_lang):
 # ---------------------------------------------------------------------------
 # Tests — LLM invocation
 # ---------------------------------------------------------------------------
+
 
 @patch(
     "tradingagents.agents.risk_mgmt.aggressive_debator.get_language_instruction",
@@ -273,6 +275,7 @@ def test_prompt_contains_debate_context(mock_lang):
 # Tests — state reading with missing optional keys
 # ---------------------------------------------------------------------------
 
+
 @patch(
     "tradingagents.agents.risk_mgmt.aggressive_debator.get_language_instruction",
     return_value="",
@@ -282,9 +285,7 @@ def test_handles_minimal_risk_debate_state(mock_lang):
     llm = _mock_llm()
     node = create_aggressive_debator(llm)
 
-    minimal_state = _make_state(
-        risk_debate_state={"count": 0}
-    )
+    minimal_state = _make_state(risk_debate_state={"count": 0})
     result = node(minimal_state)
 
     # Should still produce a valid result without errors

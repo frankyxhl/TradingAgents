@@ -1,21 +1,19 @@
 """Tests for render_report.py (project root)."""
 
-import sys
 import os
-import pytest
+import sys
 
 # Ensure project root is on sys.path so `import render_report` works
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-import render_report
-from render_report import inline_md, md_to_html, render_html
-
+from render_report import inline_md, md_to_html, render_html  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # inline_md
 # ---------------------------------------------------------------------------
+
 
 def test_inline_md_bold_asterisks():
     assert inline_md("**hello**") == "<strong>hello</strong>"
@@ -53,6 +51,7 @@ def test_inline_md_nested_code_in_bold():
 # ---------------------------------------------------------------------------
 # md_to_html
 # ---------------------------------------------------------------------------
+
 
 def test_md_to_html_heading_h1():
     result = md_to_html("# Title")
@@ -132,6 +131,7 @@ def test_md_to_html_bold_inline_in_paragraph():
 # render_html — action extraction (English format)
 # ---------------------------------------------------------------------------
 
+
 def _minimal_data(decision: str) -> dict:
     return {
         "trade_date": "2025-01-01",
@@ -168,6 +168,7 @@ def test_render_html_english_action_case_insensitive_in_badge():
 # ---------------------------------------------------------------------------
 # render_html — action extraction (Chinese format)
 # ---------------------------------------------------------------------------
+
 
 def test_render_html_chinese_buy_action():
     data = _minimal_data("最终交易建议：**买入**")
@@ -213,6 +214,7 @@ def test_render_html_chinese_colon_variants():
 # render_html — fallback keyword scan
 # ---------------------------------------------------------------------------
 
+
 def test_render_html_fallback_chinese_keyword_buy():
     """Fallback: 建议买入 in tail should resolve to BUY."""
     data = _minimal_data("分析结果显示 建议买入")
@@ -243,6 +245,7 @@ def test_render_html_fallback_unknown_action_defaults_hold_class():
 # ---------------------------------------------------------------------------
 # render_html — structure and metadata
 # ---------------------------------------------------------------------------
+
 
 def test_render_html_contains_ticker_in_title():
     data = _minimal_data("FINAL TRANSACTION PROPOSAL: BUY")
@@ -276,7 +279,7 @@ def test_render_html_optional_sections_absent_by_default():
     data = _minimal_data("FINAL TRANSACTION PROPOSAL: BUY")
     html = render_html(data)
     # The nav link for debate should not appear when no debate data is present
-    assert '投资辩论' not in html
+    assert "投资辩论" not in html
 
 
 def test_render_html_debate_section_present_when_bull_history():
@@ -313,6 +316,7 @@ def test_render_html_trader_plan_section():
 # flatten (accessed via render_html with list values)
 # ---------------------------------------------------------------------------
 
+
 def test_render_html_flatten_list_bull_history():
     """flatten() inside render_html should join list elements with double newline."""
     data = _minimal_data("FINAL TRANSACTION PROPOSAL: BUY")
@@ -340,6 +344,7 @@ def test_render_html_flatten_single_string_unchanged():
 # ---------------------------------------------------------------------------
 # render_html — Chinese action labels displayed correctly
 # ---------------------------------------------------------------------------
+
 
 def test_render_html_buy_displays_chinese_label():
     data = _minimal_data("FINAL TRANSACTION PROPOSAL: BUY")

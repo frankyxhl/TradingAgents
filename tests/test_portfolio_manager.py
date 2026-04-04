@@ -7,16 +7,14 @@ including CN/EN prompt selection, rating scale handling, state update format,
 LLM invocation, and risk debate context.
 """
 
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from tradingagents.agents.managers.portfolio_manager import create_portfolio_manager
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_state(
     company_of_interest="AAPL",
@@ -77,6 +75,7 @@ def _mock_memory(memories=None):
 # CN/EN prompt selection
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.managers.portfolio_manager.get_language_instruction")
 def test_chinese_prompt_when_language_instruction_non_empty(mock_lang):
     """When get_language_instruction returns non-empty (Chinese mode),
@@ -127,6 +126,7 @@ def test_chinese_prompt_includes_lang_instruction_suffix(mock_lang):
 # Rating scale handling
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.managers.portfolio_manager.get_language_instruction")
 def test_chinese_rating_scale_terms(mock_lang):
     """Chinese prompt should include the five Chinese rating terms."""
@@ -161,6 +161,7 @@ def test_english_rating_scale_terms(mock_lang):
 # State update format
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.managers.portfolio_manager.get_language_instruction")
 def test_returns_correct_top_level_keys(mock_lang):
     """Returned dict must contain 'risk_debate_state' and 'final_trade_decision'."""
@@ -186,10 +187,16 @@ def test_risk_debate_state_has_required_keys(mock_lang):
 
     debate_state = result["risk_debate_state"]
     expected_keys = {
-        "judge_decision", "history", "aggressive_history",
-        "conservative_history", "neutral_history", "latest_speaker",
-        "current_aggressive_response", "current_conservative_response",
-        "current_neutral_response", "count",
+        "judge_decision",
+        "history",
+        "aggressive_history",
+        "conservative_history",
+        "neutral_history",
+        "latest_speaker",
+        "current_aggressive_response",
+        "current_conservative_response",
+        "current_neutral_response",
+        "count",
     }
     assert set(debate_state.keys()) == expected_keys
 
@@ -267,11 +274,13 @@ def test_sub_histories_preserved(mock_lang):
     memory = _mock_memory()
 
     node = create_portfolio_manager(llm, memory)
-    result = node(_make_state(
-        aggressive_history="aggressive says go big",
-        conservative_history="conservative says careful",
-        neutral_history="neutral says balanced",
-    ))
+    result = node(
+        _make_state(
+            aggressive_history="aggressive says go big",
+            conservative_history="conservative says careful",
+            neutral_history="neutral says balanced",
+        )
+    )
 
     ds = result["risk_debate_state"]
     assert ds["aggressive_history"] == "aggressive says go big"
@@ -287,11 +296,13 @@ def test_current_responses_preserved(mock_lang):
     memory = _mock_memory()
 
     node = create_portfolio_manager(llm, memory)
-    result = node(_make_state(
-        current_aggressive_response="agg resp",
-        current_conservative_response="con resp",
-        current_neutral_response="neu resp",
-    ))
+    result = node(
+        _make_state(
+            current_aggressive_response="agg resp",
+            current_conservative_response="con resp",
+            current_neutral_response="neu resp",
+        )
+    )
 
     ds = result["risk_debate_state"]
     assert ds["current_aggressive_response"] == "agg resp"
@@ -302,6 +313,7 @@ def test_current_responses_preserved(mock_lang):
 # ---------------------------------------------------------------------------
 # LLM invocation with risk debate context
 # ---------------------------------------------------------------------------
+
 
 @patch("tradingagents.agents.managers.portfolio_manager.get_language_instruction")
 def test_llm_invoke_called_once(mock_lang):
@@ -390,6 +402,7 @@ def test_chinese_prompt_contains_debate_history(mock_lang):
 # Memory integration
 # ---------------------------------------------------------------------------
 
+
 @patch("tradingagents.agents.managers.portfolio_manager.get_language_instruction")
 def test_memory_get_memories_called(mock_lang):
     """memory.get_memories should be called with n_matches=2."""
@@ -413,12 +426,14 @@ def test_memory_situation_includes_reports(mock_lang):
     memory = _mock_memory()
 
     node = create_portfolio_manager(llm, memory)
-    node(_make_state(
-        market_report="MR_X",
-        sentiment_report="SR_X",
-        news_report="NR_X",
-        fundamentals_report="FR_X",
-    ))
+    node(
+        _make_state(
+            market_report="MR_X",
+            sentiment_report="SR_X",
+            news_report="NR_X",
+            fundamentals_report="FR_X",
+        )
+    )
 
     situation_arg = memory.get_memories.call_args[0][0]
     assert "MR_X" in situation_arg
@@ -463,6 +478,7 @@ def test_empty_memories_no_error(mock_lang):
 # ---------------------------------------------------------------------------
 # Factory function
 # ---------------------------------------------------------------------------
+
 
 def test_create_portfolio_manager_returns_callable():
     """create_portfolio_manager should return a callable."""
