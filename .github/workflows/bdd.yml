@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e "."
-          pip install pytest pytest-bdd
+          pip install pytest pytest-bdd pytest-cov
       - name: Run BDD tests
         run: |
           python -m pytest tests/test_bdd_scenarios.py -v

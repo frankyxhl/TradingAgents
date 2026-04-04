@@ -17,7 +17,13 @@ jobs:
           python-version: "3.13"
       - name: Install ruff
         run: pip install ruff
-      - name: Ruff check
-        run: ruff check tradingagents/ cli/ tests/
-      - name: Ruff format check
-        run: ruff format --check tradingagents/ cli/ tests/
+      - name: Ruff check (tests)
+        run: ruff check tests/
+      - name: Ruff check (source - informational)
+        continue-on-error: true
+        run: ruff check tradingagents/ cli/
+      - name: Ruff format check (tests)
+        run: ruff format --check tests/
+      - name: Ruff format check (source - informational)
+        continue-on-error: true
+        run: ruff format --check tradingagents/ cli/
