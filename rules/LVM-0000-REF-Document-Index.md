@@ -11,6 +11,7 @@
 |------|------|-------|
 | 1000 | SOP | Workflow Routing PRJ |
 | 2000 | CHG | Add automated test coverage |
+| 2001 | CHG | CI pipeline with test coverage and quality gates |
 
 ---
 
