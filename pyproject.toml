@@ -35,8 +35,34 @@ dependencies = [
 [project.scripts]
 tradingagents = "cli.main:app"
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0",
+    "pytest-cov>=7.0",
+    "pytest-bdd>=8.0",
+    "ruff>=0.11",
+]
+
 [tool.setuptools.packages.find]
 include = ["tradingagents*", "cli*"]
 
 [tool.setuptools.package-data]
 cli = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=tradingagents --cov=render_report --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["tradingagents", "render_report"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 65
+
+[tool.ruff]
+target-version = "py313"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
