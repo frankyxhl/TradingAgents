@@ -63,6 +63,17 @@ MODEL_OPTIONS: ProviderModeOptions = {
             ("Grok 4.1 Fast (Non-Reasoning) - Speed optimized, 2M ctx", "grok-4-1-fast-non-reasoning"),
         ],
     },
+    "zai": {
+        "quick": [
+            ("GLM-5-Turbo - Agentic optimized, 200K ctx", "glm-5-turbo"),
+            ("GLM-4.5-Air - Lightweight, fast responses", "glm-4.5-air"),
+        ],
+        "deep": [
+            ("GLM-5.1 - Latest flagship model", "glm-5.1"),
+            ("GLM-5-Turbo - Agentic optimized, 200K ctx", "glm-5-turbo"),
+            ("GLM-5 - Frontier model", "glm-5"),
+        ],
+    },
     "openrouter": {
         "quick": [
             ("NVIDIA Nemotron 3 Nano 30B (free)", "nvidia/nemotron-3-nano-30b-a3b:free"),
