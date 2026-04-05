@@ -73,14 +73,14 @@ python test_zai.py
 ## Change Classification
 
 ### Standard (no review needed)
-- HTML report theme/style adjustments in `render_report.py`
+- HTML report theme/style adjustments in `tradingagents/render_report.py`
 - Adding new tickers to test scripts
 - Documentation and comments
 
 ### Normal (test before commit)
 - New LLM provider addition
 - Agent prompt modifications (i18n, instructions)
-- `render_report.py` logic changes
+- `tradingagents/render_report.py` logic changes
 - CLI selection changes in `cli/utils.py`
 
 ### High Risk (test + careful review)
@@ -100,11 +100,17 @@ to conditional_logic.py. This was learned on 2026-04-04.
 
 ## Testing Checklist
 
-| Layer | Command | What it verifies |
-|-------|---------|------------------|
-| Data | `python test.py` | yfinance data retrieval works |
-| Full pipeline | `python test_zai.py` | End-to-end agent run with Z.AI |
-| Report render | `python render_report.py` | HTML generation from JSON |
+### Before every push → LVM-1001 (Pre-Push CI Gate)
+
+All 4 automated checks (pytest, ruff check, ruff format, BDD) must pass locally before `git push`. See `af read LVM-1001` for details.
+
+### Manual tests (when touching specific layers)
+
+| Layer | Command | When to run |
+|-------|---------|-------------|
+| Data | `python test.py` | Changes to `dataflows/` |
+| Full pipeline | `python test_zai.py` | End-to-end verification with Z.AI |
+| Report render | `python -m tradingagents.render_report` | Changes to `tradingagents/render_report.py` |
 
 Before committing Normal or High Risk changes, run at minimum the relevant layer test.
 
@@ -130,7 +136,7 @@ Before committing Normal or High Risk changes, run at minimum the relevant layer
 | `tradingagents/llm_clients/factory.py` | Provider → Client routing |
 | `tradingagents/graph/conditional_logic.py` | LangGraph debate/risk routing |
 | `tradingagents/agents/utils/agent_utils.py` | `get_language_instruction()` |
-| `render_report.py` | JSON → HTML report renderer |
+| `tradingagents/render_report.py` | JSON → HTML report renderer |
 | `test_zai.py` | Quick test script |
 | `cli/utils.py` | CLI provider/model selection |
 
@@ -140,6 +146,10 @@ Before committing Normal or High Risk changes, run at minimum the relevant layer
 
 This is a routing SOP — no procedural steps. The Branch Rules, Change Classification, and Testing Checklist above define the routing rules.
 
+### Ready to commit/push/PR?
+
+→ Follow **LVM-1002** (Commit and Release Flow): `af read LVM-1002`
+
 ---
 
 ## Change History
@@ -147,3 +157,4 @@ This is a routing SOP — no procedural steps. The Branch Rules, Change Classifi
 | Date | Change | By |
 |------|--------|----|
 | 2026-04-04 | Initial version: branch strategy, change classification, testing checklist | Frank + Claude Code |
+| 2026-04-04 | Update Testing Checklist to reference LVM-1001 (Pre-Push CI Gate), add automated test suite | Claude Code |

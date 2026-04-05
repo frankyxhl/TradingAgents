@@ -176,7 +176,7 @@ def report_with_action(action):
 
 @when("rendered to HTML", target_fixture="rendered_html")
 def render_to_html(report_data):
-    from render_report import render_html
+    from tradingagents.render_report import render_html
 
     html = render_html(report_data)
     return {"html": html}

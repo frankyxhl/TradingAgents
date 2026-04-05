@@ -51,17 +51,17 @@ cli = ["static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=tradingagents --cov=render_report --cov-report=term-missing"
+addopts = "--cov=tradingagents --cov-report=term-missing"
 
 [tool.coverage.run]
-source = ["tradingagents", "render_report"]
+source = ["tradingagents"]
 
 [tool.coverage.report]
 show_missing = true
 fail_under = 65
 
 [tool.ruff]
-target-version = "py313"
+target-version = "py310"
 line-length = 100
 
 [tool.ruff.lint]
