@@ -368,27 +368,30 @@ def render_pdf(data: dict, output_path: str = None) -> str:
         date = data.get("trade_date", "unknown-date")
         output_path = f"{ticker}_{date}_report.pdf"
 
-    from weasyprint import HTML
+    try:
+        from weasyprint import HTML
+    except ImportError:
+        raise ImportError(
+            "weasyprint is required for PDF export. Install with: pip install tradingagents[pdf]"
+        ) from None
 
     HTML(string=html).write_pdf(output_path)
     return output_path
 
 
 def main():
-    if len(sys.argv) < 2:
-        # Find most recent report
+    use_pdf = "--pdf" in sys.argv
+    argv = [a for a in sys.argv[1:] if a != "--pdf"]
+
+    if not argv:
+        # No JSON file specified, find most recent
         reports = sorted(Path("eval_results").rglob("full_states_log_*.json"))
         if not reports:
             print("No reports found. Pass a JSON file path as argument.")
             sys.exit(1)
         json_path = reports[-1]
     else:
-        json_path = Path(sys.argv[1])
-        if json_path.suffix == "--pdf" or str(json_path) == "--pdf":
-            print("Usage: python -m tradingagents.render_report <json_file> [--pdf]")
-            sys.exit(1)
-
-    use_pdf = "--pdf" in sys.argv
+        json_path = Path(argv[0])
 
     with open(json_path, encoding="utf-8") as f:
         raw = json.load(f)

@@ -1,7 +1,10 @@
 """Tests for render_pdf in render_report.py."""
 
+import importlib
 import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from tradingagents.render_report import render_pdf
 
@@ -82,3 +85,27 @@ def test_render_pdf_returns_string(tmp_path):
         result = render_pdf(_minimal_data(), output_path=out)
 
     assert isinstance(result, str)
+
+
+def test_render_pdf_raises_helpful_error_without_weasyprint(tmp_path):
+    """When weasyprint is not installed, render_pdf raises ImportError with install instructions."""
+    data = _minimal_data()
+    output = str(tmp_path / "output.pdf")
+
+    # Temporarily make weasyprint unimportable
+    saved = sys.modules.get("weasyprint")
+    sys.modules["weasyprint"] = None  # forces ImportError on import
+
+    try:
+        import tradingagents.render_report
+
+        importlib.reload(tradingagents.render_report)
+
+        with pytest.raises(ImportError, match="pip install tradingagents"):
+            tradingagents.render_report.render_pdf(data, output)
+    finally:
+        if saved is not None:
+            sys.modules["weasyprint"] = saved
+        else:
+            sys.modules.pop("weasyprint", None)
+        importlib.reload(tradingagents.render_report)
