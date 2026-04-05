@@ -59,11 +59,19 @@ def main():
         from datetime import timedelta
 
         args.date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        try:
+            datetime.strptime(args.date, "%Y-%m-%d")
+        except ValueError:
+            print(f"Error: invalid date format '{args.date}'. Use YYYY-MM-DD.")
+            sys.exit(1)
 
     config = DEFAULT_CONFIG.copy()
     config["llm_provider"] = args.provider
     config["deep_think_llm"] = args.model
     config["quick_think_llm"] = args.model
+    # Clear backend_url so each provider uses its own default endpoint
+    config["backend_url"] = None
     config["output_language"] = args.language
     config["max_debate_rounds"] = 1
     config["max_risk_discuss_rounds"] = 1
