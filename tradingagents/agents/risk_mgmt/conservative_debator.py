@@ -1,6 +1,7 @@
-from langchain_core.messages import AIMessage
-import time
 import json
+import time
+
+from langchain_core.messages import AIMessage
 
 from tradingagents.agents.utils.agent_utils import get_language_instruction
 
@@ -46,13 +47,9 @@ Engage by questioning their optimism and emphasizing the potential downsides the
             "conservative_history": conservative_history + "\n" + argument,
             "neutral_history": risk_debate_state.get("neutral_history", ""),
             "latest_speaker": "Conservative",
-            "current_aggressive_response": risk_debate_state.get(
-                "current_aggressive_response", ""
-            ),
+            "current_aggressive_response": risk_debate_state.get("current_aggressive_response", ""),
             "current_conservative_response": argument,
-            "current_neutral_response": risk_debate_state.get(
-                "current_neutral_response", ""
-            ),
+            "current_neutral_response": risk_debate_state.get("current_neutral_response", ""),
             "count": risk_debate_state["count"] + 1,
         }
 

@@ -1,7 +1,13 @@
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-import time
 import json
-from tradingagents.agents.utils.agent_utils import build_instrument_context, get_language_instruction, get_news
+import time
+
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+from tradingagents.agents.utils.agent_utils import (
+    build_instrument_context,
+    get_language_instruction,
+    get_news,
+)
 from tradingagents.dataflows.config import get_config
 
 

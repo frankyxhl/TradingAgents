@@ -1,5 +1,5 @@
-import time
 import json
+import time
 
 from tradingagents.agents.utils.agent_utils import get_language_instruction
 
@@ -45,10 +45,10 @@ Engage actively by analyzing both sides critically, addressing weaknesses in the
             "conservative_history": risk_debate_state.get("conservative_history", ""),
             "neutral_history": neutral_history + "\n" + argument,
             "latest_speaker": "Neutral",
-            "current_aggressive_response": risk_debate_state.get(
-                "current_aggressive_response", ""
+            "current_aggressive_response": risk_debate_state.get("current_aggressive_response", ""),
+            "current_conservative_response": risk_debate_state.get(
+                "current_conservative_response", ""
             ),
-            "current_conservative_response": risk_debate_state.get("current_conservative_response", ""),
             "current_neutral_response": argument,
             "count": risk_debate_state["count"] + 1,
         }

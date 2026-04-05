@@ -1,6 +1,7 @@
 # TradingAgents/graph/reflection.py
 
-from typing import Dict, Any
+from typing import Any, Dict
+
 from langchain_openai import ChatOpenAI
 
 
@@ -15,7 +16,7 @@ class Reflector:
     def _get_reflection_prompt(self) -> str:
         """Get the system prompt for reflection."""
         return """
-You are an expert financial analyst tasked with reviewing trading decisions/analysis and providing a comprehensive, step-by-step analysis. 
+You are an expert financial analyst tasked with reviewing trading decisions/analysis and providing a comprehensive, step-by-step analysis.
 Your goal is to deliver detailed insights into investment decisions and highlight opportunities for improvement, adhering strictly to the following guidelines:
 
 1. Reasoning:
@@ -25,7 +26,7 @@ Your goal is to deliver detailed insights into investment decisions and highligh
      - Technical indicators.
      - Technical signals.
      - Price movement analysis.
-     - Overall market data analysis 
+     - Overall market data analysis
      - News analysis.
      - Social media and sentiment analysis.
      - Fundamental data analysis.
@@ -75,9 +76,7 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         situation = self._extract_current_situation(current_state)
         bull_debate_history = current_state["investment_debate_state"]["bull_history"]
 
-        result = self._reflect_on_component(
-            "BULL", bull_debate_history, situation, returns_losses
-        )
+        result = self._reflect_on_component("BULL", bull_debate_history, situation, returns_losses)
         bull_memory.add_situations([(situation, result)])
 
     def reflect_bear_researcher(self, current_state, returns_losses, bear_memory):
@@ -85,9 +84,7 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         situation = self._extract_current_situation(current_state)
         bear_debate_history = current_state["investment_debate_state"]["bear_history"]
 
-        result = self._reflect_on_component(
-            "BEAR", bear_debate_history, situation, returns_losses
-        )
+        result = self._reflect_on_component("BEAR", bear_debate_history, situation, returns_losses)
         bear_memory.add_situations([(situation, result)])
 
     def reflect_trader(self, current_state, returns_losses, trader_memory):
@@ -95,9 +92,7 @@ Adhere strictly to these instructions, and ensure your output is detailed, accur
         situation = self._extract_current_situation(current_state)
         trader_decision = current_state["trader_investment_plan"]
 
-        result = self._reflect_on_component(
-            "TRADER", trader_decision, situation, returns_losses
-        )
+        result = self._reflect_on_component("TRADER", trader_decision, situation, returns_losses)
         trader_memory.add_situations([(situation, result)])
 
     def reflect_invest_judge(self, current_state, returns_losses, invest_judge_memory):
