@@ -66,6 +66,8 @@ def main():
             print(f"Error: invalid date format '{args.date}'. Use YYYY-MM-DD.")
             sys.exit(1)
 
+    args.provider = args.provider.lower()
+
     # Default models per provider
     _DEFAULT_MODELS = {
         "zai": "glm-5-turbo",
