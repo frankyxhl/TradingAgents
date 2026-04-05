@@ -61,7 +61,7 @@ def create_llm_client(provider_context):
         return {"call_kwargs": MockLLM.call_args}
 
 
-@then(parsers.parse('the client should use the Z.AI Coding API endpoint "{endpoint}"'))
+@then(parsers.parse('the client should use the endpoint "{endpoint}"'))
 def verify_endpoint(llm_client, endpoint):
     call_kwargs = llm_client["call_kwargs"]
     # NormalizedChatOpenAI receives base_url as a keyword argument

@@ -3,6 +3,7 @@
 All yfinance / network calls are mocked. No real HTTP requests are made.
 """
 
+import re
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -96,8 +97,15 @@ class TestGetYFinDataOnline:
         from tradingagents.dataflows.y_finance import get_YFin_data_online
 
         result = get_YFin_data_online("AAPL", "2024-01-01", "2024-01-10")
-        # Should NOT contain timezone abbreviation in the CSV dates
-        assert "US/Eastern" not in result
+        # Verify that CSV timestamp rows have no timezone offset (+HH:MM or -HH:MM)
+        lines = result.strip().split("\n")
+        # Skip comment lines (starting with #) and blank lines, then skip CSV header
+        data_lines = [ln for ln in lines if ln and not ln.startswith("#")]
+        for line in data_lines[1:]:  # skip CSV header row
+            timestamp = line.split(",")[0]
+            assert not re.search(r"[+-]\d{2}:\d{2}$", timestamp), (
+                f"Timezone offset found in timestamp: {timestamp}"
+            )
 
     @patch("tradingagents.dataflows.y_finance.yf_retry")
     @patch("tradingagents.dataflows.y_finance.yf.Ticker")
@@ -254,61 +262,97 @@ class TestGetStockStatsIndicatorsWindow:
 
 
 class TestGetStockStatsBulk:
-    """Tests for _get_stock_stats_bulk.
+    """Tests for _get_stock_stats_bulk."""
 
-    NOTE: The source file has a bug -- `pd.isna()` is called on line 213 but
-    `pandas` is never imported as `pd` in y_finance.py.  This causes a
-    NameError at runtime.  The bug is masked in production because the caller
-    (get_stock_stats_indicators_window) wraps the call in try/except and
-    falls back to per-date calls.  The tests below verify the bug exists
-    (NameError is raised) so we don't silently hide it.
-    """
+    def _make_wrapped_df(self, dates, values, indicator):
+        """Return a minimal DataFrame that stockstats.wrap would produce.
 
-    @patch("tradingagents.dataflows.y_finance.load_ohlcv")
-    def test_raises_name_error_due_to_missing_pd_import(self, mock_load):
-        """_get_stock_stats_bulk raises NameError because `pd` is not imported.
-
-        This documents a real bug: the function uses `pd.isna()` but does
-        not import pandas.  If the bug is fixed (by adding `import pandas as pd`
-        to y_finance.py), this test should be updated to verify correct output.
+        The Date column is kept as datetime so the source code's
+        ``df["Date"].dt.strftime(...)`` call succeeds.
         """
-        df = pd.DataFrame(
+        return pd.DataFrame(
             {
-                "Date": pd.to_datetime(["2024-06-01", "2024-06-02", "2024-06-03"]),
-                "Open": [100, 101, 102],
-                "High": [105, 106, 107],
-                "Low": [99, 100, 101],
-                "Close": [103, 104, 105],
-                "Volume": [1e6, 1.1e6, 1.2e6],
+                "Date": pd.to_datetime(dates),
+                "open": [100] * len(dates),
+                "high": [105] * len(dates),
+                "low": [99] * len(dates),
+                "close": [103] * len(dates),
+                "volume": [1e6] * len(dates),
+                indicator: values,
             }
         )
-        mock_load.return_value = df
+
+    @patch("stockstats.wrap")
+    @patch("tradingagents.dataflows.y_finance.load_ohlcv")
+    def test_returns_dict_of_date_to_value(self, mock_load, mock_wrap):
+        """Normal case: returns a dict mapping date strings to indicator values."""
+        raw_df = pd.DataFrame(
+            {
+                "Date": pd.to_datetime(["2024-06-01", "2024-06-03"]),
+                "open": [100, 102],
+                "high": [105, 107],
+                "low": [99, 101],
+                "close": [103, 105],
+                "volume": [1e6, 1.2e6],
+            }
+        )
+        mock_load.return_value = raw_df
+        wrapped = self._make_wrapped_df(["2024-06-01", "2024-06-03"], [10.5, 12.0], "close_10_ema")
+        mock_wrap.return_value = wrapped
 
         from tradingagents.dataflows.y_finance import _get_stock_stats_bulk
 
-        with pytest.raises(NameError, match="pd"):
-            _get_stock_stats_bulk("AAPL", "close_10_ema", "2024-06-03")
+        result = _get_stock_stats_bulk("AAPL", "close_10_ema", "2024-06-03")
 
+        assert isinstance(result, dict)
+        assert result["2024-06-01"] == "10.5"
+        assert result["2024-06-03"] == "12.0"
+
+    @patch("stockstats.wrap")
     @patch("tradingagents.dataflows.y_finance.load_ohlcv")
-    def test_calls_load_ohlcv_and_wraps(self, mock_load):
-        """Verify load_ohlcv is called and stockstats wrap is used before the bug hits."""
-        df = pd.DataFrame(
+    def test_nan_values_become_na_string(self, mock_load, mock_wrap):
+        """NaN indicator values should be mapped to the string 'N/A'."""
+        raw_df = pd.DataFrame(
             {
                 "Date": pd.to_datetime(["2024-06-01"]),
-                "Open": [100],
-                "High": [105],
-                "Low": [99],
-                "Close": [103],
-                "Volume": [1e6],
+                "open": [100],
+                "high": [105],
+                "low": [99],
+                "close": [103],
+                "volume": [1e6],
             }
         )
-        mock_load.return_value = df
+        mock_load.return_value = raw_df
+        wrapped = self._make_wrapped_df(["2024-06-01"], [float("nan")], "close_10_ema")
+        mock_wrap.return_value = wrapped
 
         from tradingagents.dataflows.y_finance import _get_stock_stats_bulk
 
-        # Will raise NameError due to pd.isna bug, but load_ohlcv should have been called
-        with pytest.raises(NameError):
-            _get_stock_stats_bulk("AAPL", "close_10_ema", "2024-06-01")
+        result = _get_stock_stats_bulk("AAPL", "close_10_ema", "2024-06-01")
+
+        assert result["2024-06-01"] == "N/A"
+
+    @patch("stockstats.wrap")
+    @patch("tradingagents.dataflows.y_finance.load_ohlcv")
+    def test_calls_load_ohlcv_with_correct_args(self, mock_load, mock_wrap):
+        """load_ohlcv should be called with the symbol and curr_date."""
+        raw_df = pd.DataFrame(
+            {
+                "Date": pd.to_datetime(["2024-06-01"]),
+                "open": [100],
+                "high": [105],
+                "low": [99],
+                "close": [103],
+                "volume": [1e6],
+            }
+        )
+        mock_load.return_value = raw_df
+        wrapped = self._make_wrapped_df(["2024-06-01"], [50.0], "rsi")
+        mock_wrap.return_value = wrapped
+
+        from tradingagents.dataflows.y_finance import _get_stock_stats_bulk
+
+        _get_stock_stats_bulk("AAPL", "rsi", "2024-06-01")
 
         mock_load.assert_called_once_with("AAPL", "2024-06-01")
 
