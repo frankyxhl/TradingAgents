@@ -1,6 +1,7 @@
-from langchain_core.messages import AIMessage
-import time
 import json
+import time
+
+from langchain_core.messages import AIMessage
 
 from tradingagents.agents.utils.agent_utils import get_language_instruction
 

@@ -7,8 +7,7 @@ on:
     branches: [livermore]
 
 jobs:
-  lint-tests:
-    name: Lint (tests - blocking)
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,23 +18,6 @@ jobs:
       - name: Install ruff
         run: pip install ruff
       - name: Ruff check
-        run: ruff check tests/
+        run: ruff check tradingagents/ cli/ tests/
       - name: Ruff format check
-        run: ruff format --check tests/
-
-  lint-source:
-    name: Lint (source - informational)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - name: Install ruff
-        run: pip install ruff
-      - name: Ruff check
-        run: ruff check tradingagents/ cli/
-      - name: Ruff format check
-        run: ruff format --check tradingagents/ cli/
+        run: ruff format --check tradingagents/ cli/ tests/

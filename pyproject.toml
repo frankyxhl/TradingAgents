@@ -66,3 +66,13 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
+ignore = [
+    "E501",   # line-too-long — upstream prompt strings are intentionally long
+    "F401",   # unused-import — re-exports in __init__.py break if removed
+    "F403",   # undefined-local-with-import-star — upstream pattern
+    "F405",   # undefined-local-with-import-star-usage — upstream pattern
+    "E402",   # module-import-not-at-top — conditional imports in source
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = []  # tests enforce all rules (no ignores)
