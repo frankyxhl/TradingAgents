@@ -352,6 +352,92 @@ footer {{ text-align: center; color: var(--text-muted); font-size: 0.8rem;
 </html>"""
 
 
+_PDF_CSS = """
+@page {
+    size: A4;
+    margin: 2cm 2.5cm;
+    @bottom-center {
+        content: counter(page) " / " counter(pages);
+        font-size: 9px;
+        color: #999;
+    }
+}
+body {
+    font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC",
+                 "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.6;
+    color: #222;
+    background: #fff;
+}
+nav { display: none; }
+.header {
+    background: none;
+    border-bottom: 2px solid #333;
+    box-shadow: none;
+    padding: 0 0 1rem 0;
+    margin-bottom: 1.5rem;
+}
+.header h1 { font-size: 20pt; font-weight: 700; margin-bottom: 0.3rem; }
+.header .date { font-size: 10pt; color: #666; }
+.badge {
+    font-size: 11pt;
+    padding: 0.3rem 1.2rem;
+    margin-top: 0.8rem;
+    border-radius: 4px;
+}
+.container { max-width: 100%; padding: 0; margin: 0; }
+section {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 1.2rem;
+    page-break-inside: avoid;
+}
+h2 {
+    font-size: 14pt;
+    color: #333;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 0.3rem;
+    margin-bottom: 0.8rem;
+    margin-top: 0.5rem;
+}
+h3 { font-size: 11pt; color: #444; margin: 0.6rem 0 0.3rem; }
+h4 { font-size: 10pt; }
+p { margin-bottom: 0.5rem; }
+ul { padding-left: 1.2rem; margin-bottom: 0.5rem; }
+li { margin-bottom: 0.15rem; }
+table { font-size: 9pt; margin: 0.5rem 0; }
+th { background: #f5f5f5; color: #333; font-weight: 600; }
+th, td { padding: 0.35rem 0.6rem; }
+.debate-grid { display: block; }
+.debate-card {
+    border: none;
+    border-left: 3px solid #ccc;
+    border-radius: 0;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.6rem;
+    background: #fafafa;
+    page-break-inside: avoid;
+}
+.debate-card.bull { border-left-color: #1a7f37; background: #f8fcf8; }
+.debate-card.bear { border-left-color: #cf222e; background: #fef8f8; }
+.debate-card.judge { border-left-color: #0969da; background: #f6f8ff; }
+.debate-card.aggressive { border-left-color: #cf222e; background: #fef8f8; }
+.debate-card.conservative { border-left-color: #1a7f37; background: #f8fcf8; }
+.debate-card.neutral { border-left-color: #9a6700; background: #fefcf5; }
+.debate-card h3 { margin-top: 0; font-size: 10pt; }
+footer {
+    font-size: 8pt;
+    color: #999;
+    border-top: 1px solid #ddd;
+    padding-top: 0.5rem;
+    margin-top: 1rem;
+}
+"""
+
+
 def render_pdf(data: dict, output_path: str = None) -> str:
     """Render analysis report to PDF.
 
@@ -363,6 +449,8 @@ def render_pdf(data: dict, output_path: str = None) -> str:
         Path to generated PDF file.
     """
     html = render_html(data)
+    # Inject PDF-specific CSS before closing </style>
+    html = html.replace("</style>", _PDF_CSS + "\n</style>")
     if output_path is None:
         ticker = data.get("company_of_interest", "UNKNOWN")
         date = data.get("trade_date", "unknown-date")
