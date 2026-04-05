@@ -37,8 +37,8 @@ def main():
     )
     parser.add_argument(
         "--model",
-        default="glm-5-turbo",
-        help="LLM model (default: glm-5-turbo)",
+        default=None,
+        help="LLM model (auto-selected per provider if omitted)",
     )
     parser.add_argument(
         "--output",
@@ -66,10 +66,22 @@ def main():
             print(f"Error: invalid date format '{args.date}'. Use YYYY-MM-DD.")
             sys.exit(1)
 
+    # Default models per provider
+    _DEFAULT_MODELS = {
+        "zai": "glm-5-turbo",
+        "openai": "gpt-5.4-mini",
+        "anthropic": "claude-sonnet-4-6",
+        "google": "gemini-2.5-flash",
+        "xai": "grok-4-fast-non-reasoning",
+        "openrouter": "gpt-5.4-mini",
+        "ollama": "llama3",
+    }
+    model = args.model or _DEFAULT_MODELS.get(args.provider, "gpt-5.4-mini")
+
     config = DEFAULT_CONFIG.copy()
     config["llm_provider"] = args.provider
-    config["deep_think_llm"] = args.model
-    config["quick_think_llm"] = args.model
+    config["deep_think_llm"] = model
+    config["quick_think_llm"] = model
     # Clear backend_url so each provider uses its own default endpoint
     config["backend_url"] = None
     config["output_language"] = args.language
