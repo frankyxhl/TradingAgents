@@ -86,7 +86,6 @@ tradingagents/
 └── default_config.py       # DEFAULT_CONFIG dict
 
 cli/                        # Interactive CLI (Typer + Rich)
-render_report.py            # JSON → HTML report renderer
 tests/                      # 559 tests (pytest + pytest-bdd)
 .github/workflows/          # CI: test.yml, lint.yml, bdd.yml
 ```

@@ -73,14 +73,14 @@ python test_zai.py
 ## Change Classification
 
 ### Standard (no review needed)
-- HTML report theme/style adjustments in `render_report.py`
+- HTML report theme/style adjustments in `tradingagents/render_report.py`
 - Adding new tickers to test scripts
 - Documentation and comments
 
 ### Normal (test before commit)
 - New LLM provider addition
 - Agent prompt modifications (i18n, instructions)
-- `render_report.py` logic changes
+- `tradingagents/render_report.py` logic changes
 - CLI selection changes in `cli/utils.py`
 
 ### High Risk (test + careful review)
@@ -110,7 +110,7 @@ All 4 automated checks (pytest, ruff check, ruff format, BDD) must pass locally 
 |-------|---------|-------------|
 | Data | `python test.py` | Changes to `dataflows/` |
 | Full pipeline | `python test_zai.py` | End-to-end verification with Z.AI |
-| Report render | `python render_report.py` | Changes to `render_report.py` |
+| Report render | `python -m tradingagents.render_report` | Changes to `tradingagents/render_report.py` |
 
 Before committing Normal or High Risk changes, run at minimum the relevant layer test.
 
