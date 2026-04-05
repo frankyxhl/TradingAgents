@@ -352,6 +352,28 @@ footer {{ text-align: center; color: var(--text-muted); font-size: 0.8rem;
 </html>"""
 
 
+def render_pdf(data: dict, output_path: str = None) -> str:
+    """Render analysis report to PDF.
+
+    Args:
+        data: Full state dict from TradingAgentsGraph.propagate()
+        output_path: Output file path. If None, auto-generates from ticker+date.
+
+    Returns:
+        Path to generated PDF file.
+    """
+    html = render_html(data)
+    if output_path is None:
+        ticker = data.get("company_of_interest", "UNKNOWN")
+        date = data.get("trade_date", "unknown-date")
+        output_path = f"{ticker}_{date}_report.pdf"
+
+    from weasyprint import HTML
+
+    HTML(string=html).write_pdf(output_path)
+    return output_path
+
+
 def main():
     if len(sys.argv) < 2:
         # Find most recent report
@@ -362,6 +384,11 @@ def main():
         json_path = reports[-1]
     else:
         json_path = Path(sys.argv[1])
+        if json_path.suffix == "--pdf" or str(json_path) == "--pdf":
+            print("Usage: python -m tradingagents.render_report <json_file> [--pdf]")
+            sys.exit(1)
+
+    use_pdf = "--pdf" in sys.argv
 
     with open(json_path, encoding="utf-8") as f:
         raw = json.load(f)
@@ -373,7 +400,11 @@ def main():
     html = render_html(data)
     out_path = json_path.with_suffix(".html")
     out_path.write_text(html, encoding="utf-8")
-    print(f"Report saved to: {out_path}")
+    print(f"HTML report saved to: {out_path}")
+
+    if use_pdf:
+        pdf_path = render_pdf(data, str(json_path.with_suffix(".pdf")))
+        print(f"PDF report saved to: {pdf_path}")
 
 
 if __name__ == "__main__":

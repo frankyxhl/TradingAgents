@@ -14,6 +14,8 @@
 | 1002 | SOP | Commit and Release Flow |
 | 2000 | CHG | Add automated test coverage |
 | 2001 | CHG | CI pipeline with test coverage and quality gates |
+| 2002 | CHG | Package as OpenClaw skill for ClawHub |
+| 2003 | CHG | Export analysis report to PDF |
 
 ---
 
