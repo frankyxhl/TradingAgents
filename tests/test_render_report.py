@@ -1,14 +1,6 @@
-"""Tests for render_report.py (project root)."""
+"""Tests for render_report.py (tradingagents package)."""
 
-import os
-import sys
-
-# Ensure project root is on sys.path so `import render_report` works
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
-from render_report import inline_md, md_to_html, render_html  # noqa: E402
+from tradingagents.render_report import inline_md, md_to_html, render_html
 
 # ---------------------------------------------------------------------------
 # inline_md

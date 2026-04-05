@@ -1,10 +1,10 @@
 """Render TradingAgents JSON report to HTML."""
 
 import json
-import sys
 import re
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 
 def md_to_html(text: str) -> str:
@@ -30,7 +30,7 @@ def md_to_html(text: str) -> str:
         if "|" in stripped and stripped.startswith("|"):
             cells = [c.strip() for c in stripped.split("|")[1:-1]]
             # Skip separator rows like |---|---|
-            if all(re.match(r'^[-:]+$', c) for c in cells):
+            if all(re.match(r"^[-:]+$", c) for c in cells):
                 table_header_done = True
                 continue
             if not in_table:
@@ -47,7 +47,7 @@ def md_to_html(text: str) -> str:
             table_header_done = False
 
         # Headers
-        m = re.match(r'^(#{1,6})\s+(.*)', stripped)
+        m = re.match(r"^(#{1,6})\s+(.*)", stripped)
         if m:
             if in_list:
                 html_lines.append("</ul>")
@@ -57,7 +57,7 @@ def md_to_html(text: str) -> str:
             continue
 
         # Unordered list
-        m = re.match(r'^[-*]\s+(.*)', stripped)
+        m = re.match(r"^[-*]\s+(.*)", stripped)
         if m:
             if not in_list:
                 html_lines.append("<ul>")
@@ -66,7 +66,7 @@ def md_to_html(text: str) -> str:
             continue
 
         # Numbered list
-        m = re.match(r'^\d+\.\s+(.*)', stripped)
+        m = re.match(r"^\d+\.\s+(.*)", stripped)
         if m:
             if not in_list:
                 html_lines.append("<ul>")
@@ -92,10 +92,10 @@ def md_to_html(text: str) -> str:
 
 def inline_md(text: str) -> str:
     """Convert inline markdown (bold, italic, code, emoji)."""
-    text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
-    text = re.sub(r'__(.+?)__', r'<strong>\1</strong>', text)
-    text = re.sub(r'\*(.+?)\*', r'<em>\1</em>', text)
-    text = re.sub(r'`(.+?)`', r'<code>\1</code>', text)
+    text = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"__(.+?)__", r"<strong>\1</strong>", text)
+    text = re.sub(r"\*(.+?)\*", r"<em>\1</em>", text)
+    text = re.sub(r"`(.+?)`", r"<code>\1</code>", text)
     return text
 
 
@@ -108,20 +108,35 @@ def render_html(data: dict) -> str:
     # Extract the final action (English or Chinese format)
     action = "N/A"
     # Try English format first
-    m = re.search(r'FINAL TRANSACTION PROPOSAL:\s*\*?\*?(\w+)', decision)
+    m = re.search(r"FINAL TRANSACTION PROPOSAL:\s*\*?\*?(\w+)", decision)
     if m:
         action = m.group(1).upper()
     else:
         # Try Chinese format: 最终交易建议：**卖出**
-        m = re.search(r'最终交易建议[：:]\s*\*?\*?(买入|卖出|持有|增持|减持)', decision)
+        m = re.search(r"最终交易建议[：:]\s*\*?\*?(买入|卖出|持有|增持|减持)", decision)
         if m:
-            action = {"买入": "BUY", "卖出": "SELL", "持有": "HOLD", "增持": "OVERWEIGHT", "减持": "UNDERWEIGHT"}[m.group(1)]
+            action = {
+                "买入": "BUY",
+                "卖出": "SELL",
+                "持有": "HOLD",
+                "增持": "OVERWEIGHT",
+                "减持": "UNDERWEIGHT",
+            }[m.group(1)]
         else:
             # Fallback: scan tail for keywords
             tail = decision[-300:]
-            cn_map = [("强力买入", "BUY"), ("建议减持", "UNDERWEIGHT"), ("建议买入", "BUY"),
-                      ("建议卖出", "SELL"), ("建议持有", "HOLD"), ("减持", "UNDERWEIGHT"),
-                      ("增持", "OVERWEIGHT"), ("买入", "BUY"), ("卖出", "SELL"), ("持有", "HOLD")]
+            cn_map = [
+                ("强力买入", "BUY"),
+                ("建议减持", "UNDERWEIGHT"),
+                ("建议买入", "BUY"),
+                ("建议卖出", "SELL"),
+                ("建议持有", "HOLD"),
+                ("减持", "UNDERWEIGHT"),
+                ("增持", "OVERWEIGHT"),
+                ("买入", "BUY"),
+                ("卖出", "SELL"),
+                ("持有", "HOLD"),
+            ]
             for cn, en in cn_map:
                 if cn in tail:
                     action = en
@@ -132,13 +147,19 @@ def render_html(data: dict) -> str:
                         action = kw
                         break
     action_label = {
-        "BUY": "买入", "SELL": "卖出", "HOLD": "持有",
-        "STRONG": "强力买入", "UNDERWEIGHT": "减持",
+        "BUY": "买入",
+        "SELL": "卖出",
+        "HOLD": "持有",
+        "STRONG": "强力买入",
+        "UNDERWEIGHT": "减持",
         "OVERWEIGHT": "增持",
     }
     action_class = {
-        "BUY": "buy", "SELL": "sell", "HOLD": "hold",
-        "STRONG": "buy", "UNDERWEIGHT": "sell",
+        "BUY": "buy",
+        "SELL": "sell",
+        "HOLD": "hold",
+        "STRONG": "buy",
+        "UNDERWEIGHT": "sell",
         "OVERWEIGHT": "buy",
     }.get(action.upper(), "hold")
     action_display = action_label.get(action.upper(), action)
@@ -178,7 +199,6 @@ def render_html(data: dict) -> str:
         risk_sections.append(("风控委员会决定", flatten(risk["judge_decision"])))
 
     trader_plan = data.get("trader_investment_decision", "")
-    investment_plan = data.get("investment_plan", "")
 
     nav_items = ""
     body_sections = ""
@@ -199,46 +219,56 @@ def render_html(data: dict) -> str:
         debate_html = ""
         for title, content in debate_sections:
             cls = "bull" if "看多" in title else "bear" if "看空" in title else "judge"
-            debate_html += f'<div class="debate-card {cls}"><h3>{title}</h3>{md_to_html(content)}</div>'
-        body_sections += f'''
+            debate_html += (
+                f'<div class="debate-card {cls}"><h3>{title}</h3>{md_to_html(content)}</div>'
+            )
+        body_sections += f"""
         <section id="debate">
             <h2>投资辩论</h2>
             <div class="debate-grid">{debate_html}</div>
-        </section>'''
+        </section>"""
 
     # Trader Decision
     if trader_plan:
         nav_items += '<a href="#trader">交易员决策</a>\n'
-        body_sections += f'''
+        body_sections += f"""
         <section id="trader">
             <h2>交易员决策</h2>
             <div class="report-content">{md_to_html(str(trader_plan))}</div>
-        </section>'''
+        </section>"""
 
     # Risk Assessment
     if risk_sections:
         nav_items += '<a href="#risk">风险评估</a>\n'
         risk_html = ""
         for title, content in risk_sections:
-            cls = "aggressive" if "激进" in title else "conservative" if "保守" in title else "neutral"
-            risk_html += f'<div class="debate-card {cls}"><h3>{title}</h3>{md_to_html(content)}</div>'
-        body_sections += f'''
+            cls = (
+                "aggressive"
+                if "激进" in title
+                else "conservative"
+                if "保守" in title
+                else "neutral"
+            )
+            risk_html += (
+                f'<div class="debate-card {cls}"><h3>{title}</h3>{md_to_html(content)}</div>'
+            )
+        body_sections += f"""
         <section id="risk">
             <h2>风险评估</h2>
             <div class="debate-grid">{risk_html}</div>
-        </section>'''
+        </section>"""
 
     # Final Decision
     nav_items += '<a href="#decision">最终决策</a>\n'
-    body_sections += f'''
+    body_sections += f"""
     <section id="decision">
         <h2>最终决策</h2>
         <div class="report-content">{md_to_html(decision)}</div>
-    </section>'''
+    </section>"""
 
     generated = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-    return f'''<!DOCTYPE html>
+    return f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -319,7 +349,7 @@ footer {{ text-align: center; color: var(--text-muted); font-size: 0.8rem;
 </div>
 <footer>由 TradingAgents + GLM-5-Turbo 生成 | {generated}</footer>
 </body>
-</html>'''
+</html>"""
 
 
 def main():
