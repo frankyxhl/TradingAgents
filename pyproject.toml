@@ -42,6 +42,9 @@ dev = [
     "pytest-bdd>=8.0",
     "ruff>=0.11",
 ]
+pdf = [
+    "weasyprint>=62.0",
+]
 
 [tool.setuptools.packages.find]
 include = ["tradingagents*", "cli*"]
