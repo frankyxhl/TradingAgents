@@ -280,6 +280,8 @@ class TradingAgentsGraph:
                 )
                 .dropna()
             )
+            # Trim weekly bars that extend past trade_date
+            weekly_df = weekly_df[weekly_df.index <= end_dt]
             for dt, row in weekly_df.iterrows():
                 weekly.append(
                     {
