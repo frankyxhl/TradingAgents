@@ -9,7 +9,9 @@ from tradingagents.agents.utils.agent_utils import (
 
 def create_research_manager(llm, memory):
     def research_manager_node(state) -> dict:
-        instrument_context = build_instrument_context(state["company_of_interest"])
+        instrument_context = build_instrument_context(
+            state["company_of_interest"], state.get("resolved_company_name")
+        )
         history = state["investment_debate_state"].get("history", "")
         market_research_report = state["market_report"]
         sentiment_report = state["sentiment_report"]

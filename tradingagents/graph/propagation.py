@@ -18,9 +18,27 @@ class Propagator:
 
     def create_initial_state(self, company_name: str, trade_date: str) -> Dict[str, Any]:
         """Create the initial state for the agent graph."""
+        # Resolve human-readable company name from ticker via yfinance
+        resolved_name = company_name  # fallback to ticker
+        try:
+            import yfinance as yf
+
+            from tradingagents.dataflows.y_finance import yf_retry
+
+            info = yf_retry(lambda: yf.Ticker(company_name).info)
+            resolved_name = info.get("longName") or info.get("shortName") or company_name
+        except Exception as exc:
+            import logging
+
+            logging.getLogger(__name__).warning(
+                f"Failed to resolve company name for {company_name}, using ticker as fallback: {exc}",
+                exc_info=True,
+            )
+
         return {
             "messages": [("human", company_name)],
             "company_of_interest": company_name,
+            "resolved_company_name": resolved_name,
             "trade_date": str(trade_date),
             "investment_debate_state": InvestDebateState(
                 {
