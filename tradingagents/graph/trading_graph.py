@@ -219,11 +219,83 @@ class TradingAgentsGraph:
         # Store current state for reflection
         self.curr_state = final_state
 
+        # Attach OHLCV data for chart (after graph, not during)
+        final_state["ohlcv_daily"], final_state["ohlcv_weekly"] = self._fetch_ohlcv(
+            company_name, trade_date
+        )
+
         # Log state
         self._log_state(trade_date, final_state)
 
         # Return decision and processed signal
         return final_state, self.process_signal(final_state["final_trade_decision"])
+
+    def _fetch_ohlcv(self, ticker, trade_date):
+        """Fetch OHLCV price data for chart rendering.
+
+        Args:
+            ticker: Stock ticker symbol (e.g., "6861.T")
+            trade_date: Analysis date string (YYYY-MM-DD). Used as end date
+                        to prevent future data leakage in backtests.
+
+        Returns:
+            Tuple of (daily_list, weekly_list). Each item is a dict with
+            keys: time, open, high, low, close, volume.
+            Returns ([], []) on failure.
+        """
+        daily, weekly = [], []
+        try:
+            from datetime import datetime, timedelta
+
+            import yfinance as yf
+
+            from tradingagents.dataflows.stockstats_utils import yf_retry
+
+            end_dt = datetime.strptime(trade_date, "%Y-%m-%d")
+            start_dt = (end_dt - timedelta(days=5 * 365)).strftime("%Y-%m-%d")
+            hist = yf_retry(lambda: yf.Ticker(ticker).history(start=start_dt, end=trade_date))
+            if hist.empty:
+                return daily, weekly
+            for dt, row in hist.iterrows():
+                daily.append(
+                    {
+                        "time": dt.strftime("%Y-%m-%d"),
+                        "open": round(row["Open"], 2),
+                        "high": round(row["High"], 2),
+                        "low": round(row["Low"], 2),
+                        "close": round(row["Close"], 2),
+                        "volume": int(row["Volume"]),
+                    }
+                )
+            weekly_df = (
+                hist.resample("W-FRI")
+                .agg(
+                    {
+                        "Open": "first",
+                        "High": "max",
+                        "Low": "min",
+                        "Close": "last",
+                        "Volume": "sum",
+                    }
+                )
+                .dropna()
+            )
+            for dt, row in weekly_df.iterrows():
+                weekly.append(
+                    {
+                        "time": dt.strftime("%Y-%m-%d"),
+                        "open": round(row["Open"], 2),
+                        "high": round(row["High"], 2),
+                        "low": round(row["Low"], 2),
+                        "close": round(row["Close"], 2),
+                        "volume": int(row["Volume"]),
+                    }
+                )
+        except Exception as exc:
+            import logging
+
+            logging.getLogger(__name__).warning(f"Failed to fetch OHLCV for {ticker}: {exc}")
+        return daily, weekly
 
     def _log_state(self, trade_date, final_state):
         """Log the final state to a JSON file."""
@@ -252,6 +324,8 @@ class TradingAgentsGraph:
             },
             "investment_plan": final_state["investment_plan"],
             "final_trade_decision": final_state["final_trade_decision"],
+            "ohlcv_daily": final_state.get("ohlcv_daily", []),
+            "ohlcv_weekly": final_state.get("ohlcv_weekly", []),
         }
 
         # Save to file
