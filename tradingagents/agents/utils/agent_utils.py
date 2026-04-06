@@ -31,11 +31,13 @@ def get_language_instruction() -> str:
     return f" Write your entire response in {lang}."
 
 
-def build_instrument_context(ticker: str) -> str:
+def build_instrument_context(ticker: str, company_name: str = None) -> str:
     """Describe the exact instrument so agents preserve exchange-qualified tickers."""
+    name_str = f"{company_name} ({ticker})" if company_name else f"`{ticker}`"
     return (
-        f"The instrument to analyze is `{ticker}`. "
-        "Use this exact ticker in every tool call, report, and recommendation, "
+        f"The instrument to analyze is {name_str}. "
+        f"The company is {company_name or ticker}. "
+        "Use the exact ticker in every tool call, report, and recommendation, "
         "preserving any exchange suffix (e.g. `.TO`, `.L`, `.HK`, `.T`)."
     )
 

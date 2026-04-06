@@ -103,6 +103,10 @@ def render_html(data: dict) -> str:
     """Build full HTML report from parsed JSON."""
     date = data["trade_date"]
     ticker = data["company_of_interest"]
+    resolved_name = data.get("resolved_company_name")
+    title_name = (
+        f"{resolved_name} ({ticker})" if resolved_name and resolved_name != ticker else ticker
+    )
     decision = data.get("final_trade_decision", "N/A")
 
     # Extract the final action (English or Chinese format)
@@ -273,7 +277,7 @@ def render_html(data: dict) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{ticker} 投资分析报告 - {date}</title>
+<title>{title_name} 投资分析报告 - {date}</title>
 <style>
 :root {{
     --bg: #f8f9fa; --surface: #ffffff; --border: #e1e4e8;
@@ -339,7 +343,7 @@ footer {{ text-align: center; color: var(--text-muted); font-size: 0.8rem;
 </head>
 <body>
 <div class="header">
-    <h1>{ticker} 投资分析报告</h1>
+    <h1>{title_name} 投资分析报告</h1>
     <div class="date">分析日期：{date}</div>
     <div class="badge {action_class}">{action_display}</div>
 </div>
