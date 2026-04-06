@@ -23,13 +23,16 @@ class Propagator:
         try:
             import yfinance as yf
 
-            info = yf.Ticker(company_name).info
+            from tradingagents.dataflows.y_finance import yf_retry
+
+            info = yf_retry(lambda: yf.Ticker(company_name).info)
             resolved_name = info.get("longName") or info.get("shortName") or company_name
-        except Exception:
+        except Exception as exc:
             import logging
 
             logging.getLogger(__name__).warning(
-                f"Failed to resolve company name for {company_name}, using ticker as fallback"
+                f"Failed to resolve company name for {company_name}, using ticker as fallback: {exc}",
+                exc_info=True,
             )
 
         return {

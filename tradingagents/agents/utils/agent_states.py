@@ -4,7 +4,7 @@ from typing import Annotated, Sequence
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
-from typing_extensions import Optional, TypedDict
+from typing_extensions import NotRequired, Optional, TypedDict
 
 from tradingagents.agents import *
 
@@ -45,7 +45,7 @@ class RiskDebateState(TypedDict):
 
 class AgentState(MessagesState):
     company_of_interest: Annotated[str, "Company that we are interested in trading"]
-    resolved_company_name: Optional[str]
+    resolved_company_name: NotRequired[str]
     trade_date: Annotated[str, "What date we are trading at"]
 
     sender: Annotated[str, "Agent that sent this message"]

@@ -1,5 +1,6 @@
 """Render TradingAgents JSON report to HTML."""
 
+import html as html_mod  # avoid name collision with local html variables
 import json
 import re
 import sys
@@ -104,9 +105,10 @@ def render_html(data: dict) -> str:
     date = data["trade_date"]
     ticker = data["company_of_interest"]
     resolved_name = data.get("resolved_company_name")
-    title_name = (
-        f"{resolved_name} ({ticker})" if resolved_name and resolved_name != ticker else ticker
-    )
+    if resolved_name and resolved_name != ticker:
+        title_name = f"{html_mod.escape(resolved_name)} ({html_mod.escape(ticker)})"
+    else:
+        title_name = html_mod.escape(ticker)
     decision = data.get("final_trade_decision", "N/A")
 
     # Extract the final action (English or Chinese format)

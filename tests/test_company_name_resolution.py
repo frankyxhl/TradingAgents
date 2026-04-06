@@ -67,6 +67,15 @@ def test_build_instrument_context_without_company_name():
     assert "9348.T" in result
 
 
+def test_build_instrument_context_no_duplication_when_name_equals_ticker():
+    """When company_name equals ticker (fallback), should not show 'AAPL (AAPL)'."""
+    from tradingagents.agents.utils.agent_utils import build_instrument_context
+
+    result = build_instrument_context("9348.T", "9348.T")
+    assert "9348.T" in result
+    assert "9348.T (9348.T)" not in result
+
+
 def test_build_instrument_context_backward_compatible():
     """Existing single-arg usage must still work (company_name defaults to None)."""
     from tradingagents.agents.utils.agent_utils import build_instrument_context
