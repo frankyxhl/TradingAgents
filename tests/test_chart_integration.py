@@ -103,6 +103,61 @@ def test_fetch_ohlcv_weekly_fewer_than_daily(mock_ticker_cls, mock_retry):
     assert len(weekly) < len(daily)
 
 
+@patch("tradingagents.dataflows.stockstats_utils.yf_retry")
+@patch("yfinance.Ticker")
+def test_fetch_ohlcv_weekly_works_with_midweek_trade_date(mock_ticker_cls, mock_retry):
+    """Weekly bars should not be empty when trade_date falls on a Wednesday."""
+    hist = _make_hist(20)
+    mock_retry.side_effect = lambda fn: fn()
+    mock_ticker_cls.return_value.history.return_value = hist
+
+    graph = _make_graph()
+    # 2025-01-15 is a Wednesday
+    daily, weekly = graph._fetch_ohlcv("AAPL", "2025-01-15")
+
+    assert len(weekly) > 0, "Weekly bars should not be empty for mid-week trade_date"
+
+
+@patch("tradingagents.dataflows.stockstats_utils.yf_retry")
+@patch("yfinance.Ticker")
+def test_fetch_ohlcv_weekly_handles_tz_aware_index(mock_ticker_cls, mock_retry):
+    """Weekly resample should work when yfinance returns tz-aware DatetimeIndex."""
+    idx = pd.bdate_range("2024-01-02", periods=20, tz="US/Eastern")
+    hist = pd.DataFrame(
+        {
+            "Open": [100 + i for i in range(20)],
+            "High": [105 + i for i in range(20)],
+            "Low": [99 + i for i in range(20)],
+            "Close": [103 + i for i in range(20)],
+            "Volume": [1000000 + i * 100000 for i in range(20)],
+        },
+        index=idx,
+    )
+    mock_retry.side_effect = lambda fn: fn()
+    mock_ticker_cls.return_value.history.return_value = hist
+
+    graph = _make_graph()
+    daily, weekly = graph._fetch_ohlcv("AAPL", "2025-01-15")
+
+    assert len(daily) == 20
+    assert len(weekly) > 0, "Weekly bars should handle tz-aware index"
+
+
+@patch("tradingagents.dataflows.stockstats_utils.yf_retry")
+@patch("yfinance.Ticker")
+def test_fetch_ohlcv_weekly_last_bar_not_past_trade_date(mock_ticker_cls, mock_retry):
+    """Last weekly bar should not have a timestamp after trade_date."""
+    hist = _make_hist(20)
+    mock_retry.side_effect = lambda fn: fn()
+    mock_ticker_cls.return_value.history.return_value = hist
+
+    graph = _make_graph()
+    daily, weekly = graph._fetch_ohlcv("AAPL", "2024-01-25")
+
+    assert len(weekly) > 0
+    assert weekly[-1]["time"] <= "2024-01-25"
+
+
 # ---------------------------------------------------------------------------
 # render_html tests
 # ---------------------------------------------------------------------------
