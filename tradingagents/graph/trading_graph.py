@@ -268,7 +268,7 @@ class TradingAgentsGraph:
                     }
                 )
             weekly_df = (
-                hist.resample("W-FRI")
+                hist.resample("W", label="left", closed="left")
                 .agg(
                     {
                         "Open": "first",
@@ -280,7 +280,10 @@ class TradingAgentsGraph:
                 )
                 .dropna()
             )
-            # Trim weekly bars that extend past trade_date
+            # Trim weekly bars whose start date is past trade_date
+            # Strip timezone from index to match naive end_dt
+            if weekly_df.index.tz is not None:
+                weekly_df.index = weekly_df.index.tz_localize(None)
             weekly_df = weekly_df[weekly_df.index <= end_dt]
             for dt, row in weekly_df.iterrows():
                 weekly.append(
