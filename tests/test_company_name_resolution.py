@@ -3,6 +3,19 @@
 import logging
 from unittest.mock import MagicMock, patch
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _clear_name_cache():
+    """Clear Propagator company name cache before each test."""
+    from tradingagents.graph.propagation import Propagator
+
+    Propagator._company_name_cache.clear()
+    yield
+    Propagator._company_name_cache.clear()
+
+
 # ---------------------------------------------------------------------------
 # create_initial_state — resolved_company_name
 # ---------------------------------------------------------------------------

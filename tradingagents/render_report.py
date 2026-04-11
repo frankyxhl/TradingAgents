@@ -102,6 +102,8 @@ def inline_md(text: str) -> str:
 
 def render_html(data: dict) -> str:
     """Build full HTML report from parsed JSON."""
+    import json as _json
+
     date = data["trade_date"]
     ticker = data["company_of_interest"]
     resolved_name = data.get("resolved_company_name")
@@ -274,6 +276,134 @@ def render_html(data: dict) -> str:
 
     generated = datetime.now().strftime("%Y-%m-%d %H:%M")
 
+    # ── Chart tab (progressive enhancement) ──
+    ohlcv_daily = data.get("ohlcv_daily", [])
+    ohlcv_weekly = data.get("ohlcv_weekly", [])
+    has_chart = bool(ohlcv_daily)
+
+    lw_js = ""
+    if has_chart:
+        lw_js_path = Path(__file__).parent / "static" / "lightweight-charts.min.js"
+        if lw_js_path.exists():
+            lw_js = lw_js_path.read_text()
+        else:
+            has_chart = False
+
+    if has_chart:
+        top_nav = (
+            '<div class="tab-bar">'
+            '<button class="tab-btn" onclick="switchTab(\'chart\')">行情图表</button>'
+            '<button class="tab-btn active" onclick="switchTab(\'analysis\')">分析报告</button>'
+            "</div>"
+        )
+    else:
+        top_nav = ""
+
+    if has_chart:
+        chart_section = (
+            '<div id="tab-chart" style="display:none">'
+            '<div class="chart-controls">'
+            '<button id="btn-daily" class="active" onclick="switchTF(\'daily\')">日线</button>'
+            '<button id="btn-weekly" onclick="switchTF(\'weekly\')">周线</button>'
+            '<span class="chart-sep"></span>'
+            '<button id="btn-light" class="active" onclick="switchTheme(\'light\')">浅色</button>'
+            '<button id="btn-dark" onclick="switchTheme(\'dark\')">深色</button>'
+            "</div>"
+            '<div id="chart-container" style="width:100%;height:calc(100vh - 160px)"></div>'
+            "</div>"
+        )
+    else:
+        chart_section = ""
+
+    analysis_section = f"""
+<div id="tab-analysis">
+<nav>{nav_items}</nav>
+<div class="container">
+{body_sections}
+</div>
+</div>"""
+
+    if has_chart:
+        # Build JS without f-strings to avoid brace escaping issues
+        chart_js_template = """
+var dailyData=DAILY_PLACEHOLDER;
+var weeklyData=WEEKLY_PLACEHOLDER;
+var container=document.getElementById('chart-container');
+var currentTF='daily';
+var currentTheme='light';
+var themes={
+    dark:{bg:'#131722',text:'#d1d4dc',grid:'#1e222d',border:'#363a45',
+        volUp:'rgba(38,166,154,0.3)',volDown:'rgba(239,83,80,0.3)'},
+    light:{bg:'#ffffff',text:'#333333',grid:'#f0f0f0',border:'#e0e0e0',
+        volUp:'rgba(38,166,154,0.25)',volDown:'rgba(239,83,80,0.25)'}
+};
+var chart=LightweightCharts.createChart(container,{
+    layout:{background:{type:'solid',color:themes.light.bg},textColor:themes.light.text},
+    grid:{vertLines:{color:themes.light.grid},horzLines:{color:themes.light.grid}},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+    rightPriceScale:{borderColor:themes.light.border},
+    timeScale:{borderColor:themes.light.border,timeVisible:false}
+});
+var candleSeries=chart.addCandlestickSeries({
+    upColor:'#26a69a',downColor:'#ef5350',
+    borderDownColor:'#ef5350',borderUpColor:'#26a69a',
+    wickDownColor:'#ef5350',wickUpColor:'#26a69a'
+});
+var volumeSeries=chart.addHistogramSeries({
+    priceFormat:{type:'volume'},priceScaleId:'volume'
+});
+chart.priceScale('volume').applyOptions({scaleMargins:{top:0.8,bottom:0}});
+function switchTF(tf){
+    currentTF=tf;
+    var data=tf==='daily'?dailyData:weeklyData;
+    candleSeries.setData(data.map(function(d){
+        return{time:d.time,open:d.open,high:d.high,low:d.low,close:d.close};
+    }));
+    var t=themes[currentTheme];
+    volumeSeries.setData(data.map(function(d){
+        return{time:d.time,value:d.volume,color:d.close>=d.open?t.volUp:t.volDown};
+    }));
+    chart.timeScale().fitContent();
+    document.getElementById('btn-daily').className=tf==='daily'?'active':'';
+    document.getElementById('btn-weekly').className=tf==='weekly'?'active':'';
+}
+function switchTheme(theme){
+    currentTheme=theme;
+    var t=themes[theme];
+    chart.applyOptions({
+        layout:{background:{type:'solid',color:t.bg},textColor:t.text},
+        grid:{vertLines:{color:t.grid},horzLines:{color:t.grid}},
+        rightPriceScale:{borderColor:t.border},
+        timeScale:{borderColor:t.border}
+    });
+    document.getElementById('btn-light').className=theme==='light'?'active':'';
+    document.getElementById('btn-dark').className=theme==='dark'?'active':'';
+    switchTF(currentTF);
+}
+function switchTab(tab){
+    document.getElementById('tab-chart').style.display=tab==='chart'?'block':'none';
+    document.getElementById('tab-analysis').style.display=tab==='analysis'?'block':'none';
+    var btns=document.querySelectorAll('.tab-btn');
+    for(var i=0;i<btns.length;i++){
+        btns[i].className=btns[i].textContent.indexOf(tab==='chart'?'\\u56FE\\u8868':'\\u62A5\\u544A')>=0?'tab-btn active':'tab-btn';
+    }
+    if(tab==='chart'){chart.resize(container.clientWidth,container.clientHeight);chart.timeScale().fitContent();}
+}
+switchTF('daily');
+switchTheme('light');
+window.addEventListener('resize',function(){
+    if(document.getElementById('tab-chart').style.display!=='none'){
+        chart.resize(container.clientWidth,container.clientHeight);
+    }
+});
+"""
+        chart_js = chart_js_template.replace("DAILY_PLACEHOLDER", _json.dumps(ohlcv_daily)).replace(
+            "WEEKLY_PLACEHOLDER", _json.dumps(ohlcv_weekly)
+        )
+        chart_init_js = "<script>" + lw_js + "</script>\n<script>" + chart_js + "</script>"
+    else:
+        chart_init_js = ""
+
     return f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -334,6 +464,22 @@ tr:nth-child(even) td {{ background: #f8f9fa; }}
 .debate-card.conservative {{ border-left-color: var(--green); background: #f6fef8; }}
 .debate-card.neutral {{ border-left-color: var(--yellow); background: #fffef5; }}
 .debate-card h3 {{ margin-top: 0; }}
+.tab-bar {{ display: flex; gap: 0; border-bottom: 2px solid var(--border);
+           background: var(--surface); position: sticky; top: 0; z-index: 10; }}
+.tab-btn {{ padding: 0.8rem 1.5rem; border: none; background: transparent;
+           color: var(--text-muted); font-size: 0.95rem; cursor: pointer;
+           transition: color 0.15s; }}
+.tab-btn:hover {{ color: var(--text); }}
+.tab-btn.active {{ color: var(--accent); border-bottom: 2px solid var(--accent);
+                   margin-bottom: -2px; }}
+.chart-controls {{ padding: 12px 24px; display: flex; gap: 8px; align-items: center;
+                  background: var(--surface); border-bottom: 1px solid var(--border); }}
+.chart-controls button {{ padding: 6px 16px; border: 1px solid var(--border);
+                         border-radius: 4px; background: transparent; color: var(--text);
+                         font-size: 13px; cursor: pointer; transition: all 0.15s; }}
+.chart-controls button:hover {{ background: #eef1f4; }}
+.chart-controls button.active {{ background: #2962ff; border-color: #2962ff; color: #fff; }}
+.chart-sep {{ width: 1px; height: 20px; background: var(--border); margin: 0 8px; }}
 footer {{ text-align: center; color: var(--text-muted); font-size: 0.8rem;
     padding: 2rem; border-top: 1px solid var(--border); }}
 @media (max-width: 600px) {{
@@ -349,16 +495,19 @@ footer {{ text-align: center; color: var(--text-muted); font-size: 0.8rem;
     <div class="date">分析日期：{date}</div>
     <div class="badge {action_class}">{action_display}</div>
 </div>
-<nav>{nav_items}</nav>
-<div class="container">
-{body_sections}
-</div>
+{top_nav}
+{chart_section}
+{analysis_section}
 <footer>由 TradingAgents + GLM-5-Turbo 生成 | {generated}</footer>
+{chart_init_js}
 </body>
 </html>"""
 
 
 _PDF_CSS = """
+#tab-chart { display: none !important; }
+.tab-bar { display: none !important; }
+#tab-analysis { display: block !important; }
 @page {
     size: A4;
     margin: 2cm 2.5cm;

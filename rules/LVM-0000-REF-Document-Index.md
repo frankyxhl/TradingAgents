@@ -17,6 +17,7 @@
 | 2002 | CHG | Package as OpenClaw skill for ClawHub |
 | 2003 | CHG | Export analysis report to PDF |
 | 2004 | CHG | Resolve company name from ticker before analysis |
+| 2005 | CHG | Add interactive chart tab to HTML report |
 
 ---
 
