@@ -43,6 +43,8 @@ class Propagator:
                 f"Failed to resolve company name for {ticker}, using ticker as fallback: {exc}",
                 exc_info=True,
             )
+            # Do NOT cache fallback — allow retry on next call
+            return resolved_name
 
         self._company_name_cache[ticker] = resolved_name
         return resolved_name

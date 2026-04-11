@@ -266,7 +266,7 @@ class TradingAgentsGraph:
                         "high": round(row["High"], 2),
                         "low": round(row["Low"], 2),
                         "close": round(row["Close"], 2),
-                        "volume": int(row["Volume"]),
+                        "volume": int(row["Volume"]) if row["Volume"] == row["Volume"] else 0,
                     }
                 )
             weekly_df = (
@@ -295,7 +295,7 @@ class TradingAgentsGraph:
                         "high": round(row["High"], 2),
                         "low": round(row["Low"], 2),
                         "close": round(row["Close"], 2),
-                        "volume": int(row["Volume"]),
+                        "volume": int(row["Volume"]) if row["Volume"] == row["Volume"] else 0,
                     }
                 )
         except Exception as exc:
