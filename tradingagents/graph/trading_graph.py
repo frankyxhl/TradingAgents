@@ -253,7 +253,9 @@ class TradingAgentsGraph:
 
             end_dt = datetime.strptime(trade_date, "%Y-%m-%d")
             start_dt = (end_dt - timedelta(days=5 * 365)).strftime("%Y-%m-%d")
-            hist = yf_retry(lambda: yf.Ticker(ticker).history(start=start_dt, end=trade_date))
+            # yfinance treats end as exclusive, so add 1 day to include trade_date
+            end_inclusive = (end_dt + timedelta(days=1)).strftime("%Y-%m-%d")
+            hist = yf_retry(lambda: yf.Ticker(ticker).history(start=start_dt, end=end_inclusive))
             if hist.empty:
                 return daily, weekly
             for dt, row in hist.iterrows():

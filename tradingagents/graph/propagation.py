@@ -12,28 +12,44 @@ from tradingagents.agents.utils.agent_states import (
 class Propagator:
     """Handles state initialization and propagation through the graph."""
 
+    # Cache resolved company names to avoid repeated yfinance calls
+    _company_name_cache: Dict[str, str] = {}
+
     def __init__(self, max_recur_limit=100):
         """Initialize with configuration parameters."""
         self.max_recur_limit = max_recur_limit
 
-    def create_initial_state(self, company_name: str, trade_date: str) -> Dict[str, Any]:
-        """Create the initial state for the agent graph."""
-        # Resolve human-readable company name from ticker via yfinance
-        resolved_name = company_name  # fallback to ticker
+    def _resolve_company_name(self, ticker: str) -> str:
+        """Resolve human-readable company name from ticker via yfinance.
+
+        Results are cached per ticker to avoid repeated API calls
+        in multi-date evaluations.
+        """
+        if ticker in self._company_name_cache:
+            return self._company_name_cache[ticker]
+
+        resolved_name = ticker  # fallback
         try:
             import yfinance as yf
 
             from tradingagents.dataflows.y_finance import yf_retry
 
-            info = yf_retry(lambda: yf.Ticker(company_name).info)
-            resolved_name = info.get("longName") or info.get("shortName") or company_name
+            info = yf_retry(lambda: yf.Ticker(ticker).info)
+            resolved_name = info.get("longName") or info.get("shortName") or ticker
         except Exception as exc:
             import logging
 
             logging.getLogger(__name__).warning(
-                f"Failed to resolve company name for {company_name}, using ticker as fallback: {exc}",
+                f"Failed to resolve company name for {ticker}, using ticker as fallback: {exc}",
                 exc_info=True,
             )
+
+        self._company_name_cache[ticker] = resolved_name
+        return resolved_name
+
+    def create_initial_state(self, company_name: str, trade_date: str) -> Dict[str, Any]:
+        """Create the initial state for the agent graph."""
+        resolved_name = self._resolve_company_name(company_name)
 
         return {
             "messages": [("human", company_name)],

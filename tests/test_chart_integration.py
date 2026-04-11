@@ -86,7 +86,9 @@ def test_fetch_ohlcv_passes_end_date(mock_ticker_cls, mock_retry):
 
     mock_ticker_cls.return_value.history.assert_called_once()
     call_kwargs = mock_ticker_cls.return_value.history.call_args
-    assert call_kwargs[1]["end"] == "2025-01-15" or call_kwargs.kwargs["end"] == "2025-01-15"
+    # end is trade_date + 1 day (yfinance treats end as exclusive)
+    end_val = call_kwargs[1].get("end") or call_kwargs.kwargs.get("end")
+    assert end_val == "2025-01-16"
 
 
 @patch("tradingagents.dataflows.stockstats_utils.yf_retry")
